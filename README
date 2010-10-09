@@ -1,0 +1,8 @@
+IRC interface for Minecraft Server Multiplexer
+
+Requires Flippeh's python library, available at:
+	http://code.google.com/p/minecraftadmin/
+
+Set the IRC settings you want in the IRC class definition in  mc.irc.py and run it.
+
+Presently all it does is connect to IRC and a multiplexer, and bark IRC I/O at you.
