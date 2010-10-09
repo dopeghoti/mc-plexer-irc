@@ -11,19 +11,19 @@ import irc_class
 # TODO: External configuration files
 
 # IRC configuration settings
-irc_server = 'irc.example.com'
-irc_nick = 'Nick'
+irc_server = 'irc.freenode.net'
+irc_nick = 'BlockHead'
 irc_port = 6667
-irc_channel = '#channel'
+irc_channel = '###linkulator'
 
 # Multiplexer configuration settings
-mc_socket = '/path/to/your/plexer.sock'
+mc_socket = '/home/minecraft/tmp/plexer.sock'
 mc_port = 9001
-mc_password = 'password'
+mc_password = 'aardvark'
 
 # So, let's connect to IRC!
 print( 'Attempting to connect to IRC' )
-conn = irc_class.IRC( irc_server, irc_port, irc_nick, irc_channel )
+irc_conn = irc_class.IRC( irc_server, irc_port, irc_nick, irc_channel )
 
 # And now, let's connect to the Minecraft Multiplexer
 # TODO: Exception handling for Plexer not being there to connect to
@@ -50,23 +50,23 @@ print( 'Multiplexer connected.' )
 #else:
 
 try:
-	while conn.status['connected']:
+	while irc_conn.status['connected']:
 
 	# See if there is anything pending _from_ IRC
-		conn.cycle()
+		irc_conn.cycle()
 
 	# see if there is anything pending _from_ Minecraft
 		pass
-	#mc.cycle
+		#mc.cycle
 
 	# See if there is anything pending _for_ IRC
-		pass
+		if irc_conn.status['joined'] == False:
+			irc_conn.join()
 
 	# See if there is anything pending _for_ Minecraft
-		pass
-
-		if conn.status['joined'] == False:
-			conn.join()
+		if irc_conn.outbox != '':
+			#there is!
+			print( 'MCM < ' + irc_conn.outbox + ' (pretend)' )
 
 #	More vestigal code from the generic client.
 
@@ -98,7 +98,7 @@ try:
 #	Exit on a ^C or other exception
 except KeyboardInterrupt:
     print 'Exiting.'
-    conn.disconnect( 'Process caught SIGINT' )
+    irc_conn.disconnect( 'Process caught SIGINT' )
 except Exception, e:
     print 'Got exception: ' + e.__str__()
 
