@@ -1,5 +1,4 @@
 #!/usr/bin/python
-
 import socket
 import multiplexlib
 import time
@@ -7,91 +6,30 @@ import sys
 import string
 import select
 
-# Define our IRC Class
-class IRC:
-	server = 'irc.example.com'
-	port = 6667
-	nick = 'NickName'
-	status = { 'connected' : False, 'registered' : False }
-	data = ''
-	buffer = ''
-	events = []
-	socket = socket.socket( socket.AF_INET, socket.SOCK_STREAM )
-	print_next_event = True
+import irc_class
 
-	def __init__( self ):
-		self.connect( )
+# TODO: External configuration files
 
-	def connect( self ):
-		print ('Connecting to IRC..')
-		try:
-			print( 'Opening socket..' )
-			self.socket.connect( ( self.server, self.port ) )
-			self.status['connected'] = True
-			print( 'IRC Socket connected.' )
-		except:
-			print( 'Failed to connect\n' + sys.exc_info() )
-			self.status['connected'] = False
+# IRC configuration settings
+irc_server = 'irc.example.com'
+irc_nick = 'Nick'
+irc_port = 6667
+irc_channel = '#channel'
 
-	def register( self ):
-		if self.status['registered'] == False:
-			self.send( 'NICK ' + self.nick )
-			self.send( 'USER ' + self.nick + ' ' + self.nick + ' ' + self.nick + 
-					' :Testing IRC Connector' )
-			self.status['registered'] = True
-
-	def cycle( self ):
-		if len( self.events ) == 0:
-			try:
-				self.data = self.socket.recv( 4096 )
-			except socket.error:
-				self.status['connected'] = False
-				return( str( sys.exc_info() ) )
-			if self.data == '':
-				self.status['connected'] = False
-				return( 'Connection reset by peer' )
-			if not self.status['registered']:
-				self.register()
-			self.parse_data()
-		next_ev = self.events.pop( 0 )
-		if self.print_next_event:
-			print( 'IRC > ' + next_ev )
-		return( self.event_handler( next_ev ) )
-
-	def event_handler( self, event ):
-		self.print_next_event = True
-		self.data = event.rstrip( '\r' )
-		sdata = self.data.split( ' ' )
-
-		if sdata[0] == 'PING':
-			print( 'Playing Ping-Pong.' )
-			self.send( 'PONG ' + ' '.join( sdata[1:] ) )
-		elif sdata[1] == '433':		#	Nick in use
-			self.nick += '_'
-			self.register()
-		elif sdata[1] in ('375', '372', '376'):		#	MOTD
-			self.print_next_event = False
-		return( self.data )
-
-	def parse_data( self ):
-		self.data = self.buffer + self.data
-		self.events = self.data.split( '\n' )
-		self.buffer = self.events.pop()
-
-	def send( self, text ):
-		self.socket.send( text + '\r\n' )
-		print ( 'IRC < ' + text )
-		
+# Multiplexer configuration settings
+mc_socket = '/path/to/your/plexer.sock'
+mc_port = 9001
+mc_password = 'password'
 
 # So, let's connect to IRC!
 print( 'Attempting to connect to IRC' )
-conn = IRC()
+conn = irc_class.IRC( irc_server, irc_port, irc_nick, irc_channel )
 
 # And now, let's connect to the Minecraft Multiplexer
 # TODO: Exception handling for Plexer not being there to connect to
 # TODO: Make this a class like IRC.
 print( 'Attempting to connect to Minecraft Multiplexer' )
-ml = multiplexlib.MinecraftRemote(socket.AF_UNIX, '/pather/to/your/plexer.sock', 9001, 'password')
+ml = multiplexlib.MinecraftRemote(socket.AF_UNIX, mc_socket, mc_port, mc_password )
 ml.connect()
 print( 'Multiplexer connected.' )
 
@@ -127,7 +65,8 @@ try:
 	# See if there is anything pending _for_ Minecraft
 		pass
 
-		
+		if conn.status['joined'] == False:
+			conn.join()
 
 #	More vestigal code from the generic client.
 
