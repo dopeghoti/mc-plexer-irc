@@ -98,6 +98,7 @@ try:
 #	Exit on a ^C or other exception
 except KeyboardInterrupt:
     print 'Exiting.'
+    conn.disconnect( 'Process caught SIGINT' )
 except Exception, e:
     print 'Got exception: ' + e.__str__()
 

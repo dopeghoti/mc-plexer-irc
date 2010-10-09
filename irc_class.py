@@ -34,8 +34,13 @@ class IRC:
 			self.status['connected'] = True
 			print( 'IRC Socket connected.' )
 		except:
-			print( 'Failed to connect\n' + sys.exc_info() )
+			print( 'Failed to connect\n' + str( sys.exc_info() ) )
 			self.status['connected'] = False
+			sys.exit( 1 )
+
+	def disconnect( self, reason ):
+		print( 'Terminating IRC connection..' )
+		self.send( 'QUIT :' + reason )
 
 	def register( self ):
 		if self.status['registered'] == False:
