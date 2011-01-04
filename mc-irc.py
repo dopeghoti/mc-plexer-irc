@@ -35,7 +35,7 @@ if( irc_conn.status['connected'] ):
 # And now, let's connect to the Minecraft Multiplexer
 # TODO: Exception handling for Plexer not being there to connect to
 print( 'Attempting to connect to Minecraft Multiplexer' )
-mc_conn = mp_class.multiplexer_connection( '/home/minecraft/tmp/plexer.sock', None, 'aardvark' )
+mc_conn = mp_class.multiplexer_connection( '/home/minecraft/tmp/plexer.sock', None, mc_password )
 mc_conn.connect()
 
 if( mc_conn.status['connected'] ):
