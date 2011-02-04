@@ -95,7 +95,7 @@ class multiplexer_connection:
 							#print( eparts )
 							chatter = chatter[:-5]
 							self.outbox.append( '<' + talker + '> ' + chatter )
-						if( chatter[0] == '?' ):
+						if( chatter and chatter[0] == '?' ):
 							#	It's a command for the bot!
 							botcmds = [ '?WHO', '?PLAYERS', '?LOAD', '?WTF', '?TIME' ]
 							keyword = chatter.split(' ')[0][1:]
@@ -111,7 +111,7 @@ class multiplexer_connection:
 								self.cmd( 'say [*] Current system load is ' + l )
 							elif( keyword.upper() in [ 'WTF', 'TIME' ] ):
 								self.cmd( 'say [*] Not yet implemented, ' + talker )
-						if( (chatter[0:2] == '??' ) and ( chatter.strip() != '??') ):
+						if( ( len(chatter) > 2) and (chatter[0:2] == '??' ) and ( chatter.strip() != '??') ):
 							#	Someone's asking what something is.
 							
 							query = ''.join( chatter[2:] ).strip()

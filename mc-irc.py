@@ -21,7 +21,7 @@ irc_channel = '##crawl-offtopic'
 # Multiplexer configuration settings
 mc_socket = '/home/minecraft/tmp/plexer.sock'
 mc_port = 9001
-mc_password = '[REDACTED]'
+mc_password = 'aardvark'
 
 sock_list = []
 
