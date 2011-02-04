@@ -8,7 +8,7 @@ import mc_blocks
 
 # Multiplexer configuration settings
 mc_socket = '/home/minecraft/tmp/plexer.sock'
-mc_password = 'aardvark'
+from mc_private import *
 
 class multiplexer_connection:
 	outbox = []
