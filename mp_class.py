@@ -76,52 +76,55 @@ class multiplexer_connection:
 	def cycle( self ):
 		self.data = self.socket.recv( 8192 )
 		self.buffer += self.data
-		if( len(self.events) < 1 ):
+		if not self.events:
 			lines = self.buffer.split( '\n' )	
 			while( len(lines) >= 2 ):
 				self.events.append( lines[0] )
 				lines = lines [1:]
 			self.buffer = lines[0]
-		if( len( self.events) > 0 ):
+		if self.events:
 			for e in self.events:
-				eparts = e.split( ' ' )
-				if( len( eparts ) > 3 ) and ( eparts[3] != '') :
-					if ( eparts[3][0] == '<' ) or (eparts[3] == '[CONSOLE]' ):
-						#	Looks like someone's talking
-						talker  = eparts[3][1:-1]		# strip the leading and trailing < and >
-						chatter = ' '.join(eparts[4:] ).strip()
-						if( e.strip().upper()[-5:] == '> IRC' ):
-							#	Someone is talking to IRC
-							#print( eparts )
-							chatter = chatter[:-5]
-							self.outbox.append( '<' + talker + '> ' + chatter )
-						if( chatter and chatter[0] == '?' ):
-							#	It's a command for the bot!
-							botcmds = [ '?WHO', '?PLAYERS', '?LOAD', '?WTF', '?TIME' ]
-							keyword = chatter.split(' ')[0][1:]
-							if( keyword.upper() == 'HELP' ):
-								self.cmd( 'say Available commands:' )
-								self.cmd( 'say [*] ' + ' '.join( botcmds ) )
-							elif( keyword.upper() in [ 'WHO', 'W', 'PLAYERS' ] ):
-								self.cmd( 'list' )
-							elif( keyword.upper() == 'LOAD' ):
-								u = open( '/proc/loadavg', 'r' )
-								l = u.readline().split()[0]
-								u.close()
-								self.cmd( 'say [*] Current system load is ' + l )
-							elif( keyword.upper() in [ 'WTF', 'TIME' ] ):
-								self.cmd( 'say [*] Not yet implemented, ' + talker )
-						if( ( len(chatter) > 2) and (chatter[0:2] == '??' ) and ( chatter.strip() != '??') ):
-							#	Someone's asking what something is.
+				eparts = e.split()
+				if len(eparts) > 3:
+					if eparts[3][0] == '<' or eparts[3] == '[CONSOLE]':
+						# Looks like someone's talking.
+						talker  = eparts[3][1:-1]	# strip the leading and trailing brackets
+						chatter = ' '.join(eparts[4:])
+						if chatter:
+
+							if len(chatter) > 5 and chatter.upper()[-5:] == '> IRC':
+								# Someone is talking to IRC.
+								chatter = chatter[:-5]
+								self.outbox.append('<' + talker + '> ' + chatter)
+
+							elif len(chatter) > 2 and chatter[:2] == '??':
+								# Someone's asking what something is.
 							
-							query = ''.join( chatter[2:] ).strip()
-							print ("?? query: " + query )
-							answer = mc_blocks.lookup( query )
-							print ("?? answer: " + str(answer) )
-							self.cmd( 'say [*] ' + query + ' is ' + str(answer) + '.' )
-					if( ' '.join(eparts[3:5]).strip() == 'Connected players:' ):
-						#	Someone asked who's playing.  Public knowledge, so relay it to all.
-						self.cmd( 'say [*] Currently playing: ' + ' '.join(eparts[5:]))
+								query = ''.join( chatter[2:] )
+								print("?? query: " + query)
+								answer = mc_blocks.lookup(query)
+								print("?? answer: " + str(answer))
+								self.cmd('say [*] ' + query + ' is ' + str(answer) + '.')
+
+							elif chatter[0] == "?":
+								# It's a command for the bot!
+								botcmds = ['?WHO', '?PLAYERS', '?LOAD', '?WTF', '?TIME']
+								keyword = chatter.split(' ')[0][1:].upper()
+								if keyword == "HELP":
+									self.cmd('say Available commands:')
+									self.cmd('say [*] ' + ' '.join(botcmds))
+								elif keyword in ['WHO', 'W', 'PLAYERS']:
+									self.cmd('list')
+								elif keyword == 'LOAD':
+									u = open('/proc/loadavg', 'r')
+									l = u.readline().split()[0]
+									u.close()
+									self.cmd('say [*] Current system load is ' + l)
+								elif keyword.upper in ['WTF', 'TIME']:
+									self.cmd('say [*] Not yet implemented, ' + talker)
+					elif ' '.join(eparts[3:5]) == 'Connected players:':
+						# Someone asked who's playing.  Public knowledge, so relay it to all.
+						self.cmd('say [*] Currently playing: ' + ' '.join(eparts[5:]))
 			self.events = []
 
 
