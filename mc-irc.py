@@ -16,7 +16,8 @@ irc_server = 'irc.freenode.net'
 irc_nick = 'VoxelHead'
 irc_port = 6667
 #irc_channel = '###linkulator'
-irc_channel = '##crawl-offtopic'
+#irc_channel = '##crawl-offtopic'
+irc_channel = '##loafyland'
 
 # Multiplexer configuration settings
 mc_socket = '/home/minecraft/tmp/plexer.sock'
@@ -68,7 +69,12 @@ try:
 		# See if there is anything pending _for_ Minecraft
 		if(len( irc_conn.outbox ) > 0):
 			for message in irc_conn.outbox:
-				print( 'MCM < ' + message )
+				print( 'MCM < ' +  message )
+				mparts = message.split()
+				#print( repr ( mparts[2] ) )
+				if mparts[2][0] == "\x01":
+					if mparts[2] == '\x01ACTION':
+						message = "IRC: * " + mparts[1][1:-1] + " " + " ".join( mparts[ 3: ] )
 				mc_conn.cmd( 'say ' + message )
 			irc_conn.outbox = []
 

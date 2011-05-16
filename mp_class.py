@@ -74,7 +74,7 @@ class multiplexer_connection:
 		self.socket.send( text + '\r\n' )
 
 	def cycle( self ):
-		self.data = self.socket.recv( 8192 )
+		self.data = self.socket.recv( 128 )
 		self.buffer += self.data
 		if not self.events:
 			lines = self.buffer.split( '\n' )	
@@ -92,12 +92,8 @@ class multiplexer_connection:
 						chatter = ' '.join(eparts[4:])
 						if chatter:
 
-							if len(chatter) > 5 and chatter.upper()[-5:] == '> IRC':
-								# Someone is talking to IRC.
-								chatter = chatter[:-5]
-								self.outbox.append('<' + talker + '> ' + chatter)
 
-							elif len(chatter) > 2 and chatter[:2] == '??':
+							if len(chatter) > 2 and chatter[:2] == '??':
 								# Someone's asking what something is.
 							
 								query = ''.join( chatter[2:] )
@@ -106,22 +102,58 @@ class multiplexer_connection:
 								print("?? answer: " + str(answer))
 								self.cmd('say [*] ' + query + ' is ' + str(answer) + '.')
 
+#							elif len(chatter) > 4 and chatter[:4].upper() in ( '?map', '?gps' ):
+#								coords = ''.join( chatter[4:] ).split( ' ' )
+#								if len( coords ) == 2: 
+#									self.cmd( 'say [*] Not fully implemented (2 arg)' )
+#									self.cmd( 'say [*] Args: ' + ' '.join( coords ) )
+#								elif len( coords ) == 3:		
+#									self.cmd( 'say [*] Not fully implemented (3 arg)' )
+#									self.cmd( 'say [*] Args: ' + ' '.join( coords ) )
+#								else:
+#									self.cmd( 'say [*] Usage: ?map X [Y] Z' )
+
 							elif chatter[0] == "?":
 								# It's a command for the bot!
-								botcmds = ['?WHO', '?PLAYERS', '?LOAD', '?WTF', '?TIME']
+								botcmds = ['?WHO', '?PLAYERS', '?LOAD', '?WTF', '?TIME', '?MAP', '?MUMBLE']
 								keyword = chatter.split(' ')[0][1:].upper()
 								if keyword == "HELP":
 									self.cmd('say Available commands:')
 									self.cmd('say [*] ' + ' '.join(botcmds))
 								elif keyword in ['WHO', 'W', 'PLAYERS']:
 									self.cmd('list')
+								elif keyword in ['MUMBLE']:
+									self.cmd( 'say [*] Mumble server at wold.its.lsu.edu' )
+									self.cmd( 'say [*] Contact DG, Thvortex, or Sunfall for PW.')
 								elif keyword == 'LOAD':
 									u = open('/proc/loadavg', 'r')
 									l = u.readline().split()[0]
 									u.close()
 									self.cmd('say [*] Current system load is ' + l)
+								elif keyword in ('MAP', 'GPS'):
+									self.cmd('say [*] Not yet implemented, ' + talker)
 								elif keyword.upper in ['WTF', 'TIME']:
 									self.cmd('say [*] Not yet implemented, ' + talker)
+							elif chatter[0] == "/":
+								#	Someone issued a command to the server. Do nothing.
+								pass
+							elif len(chatter) > 5 and ( chatter.upper()[-5:] == '> IRC' or chatter.upper()[-4:] == '>IRC' ):
+								# Someone is talking to IRC, old-school.
+								chatter = chatter[:-3]
+								self.outbox.append('<' + talker + '> ' + chatter)
+								self.cmd( 'tell ' + talker + ' [*] That notation is no longer needed.' )
+							else:
+								if talker != "CONSOLE":
+									#	chatter = chatter[:-3]
+									self.outbox.append( '<' + talker + '> ' + chatter )
+
+					elif  eparts[3][0] == "*":
+						#	Someone is acting
+						#	self.outbox.append (' action stub ' ) 
+                                                talker  = eparts[4]       # strip the leading and trailing brackets
+						chatter = ' '.join(eparts[5:])
+						self.outbox.append( ' * ' + talker + ' ' + chatter )
+
 					elif ' '.join(eparts[3:5]) == 'Connected players:':
 						# Someone asked who's playing.  Public knowledge, so relay it to all.
 						self.cmd('say [*] Currently playing: ' + ' '.join(eparts[5:]))

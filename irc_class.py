@@ -82,7 +82,7 @@ class IRC:
 		elif sdata[1] in ('375', '372', '376'):		#	MOTD
 			self.print_next_event = False
 		elif ( ( sdata[1] == 'PRIVMSG' ) and ( ( sdata[2] == self.channel ) or ( sdata[2] == self.nick ) ) ):
-			print( 'IRC > Message for me!')		#	XXX
+			#	print( 'IRC > Message for me!')		#	XXX
 			#	Raw IRC output:
 			#		0						1	2		3
 			#	IRC > :DopeGhoti!~ghoti@ip98-177-177-13.ph.ph.cox.net PRIVMSG ###linkulator :Ignore this message
@@ -107,6 +107,14 @@ class IRC:
 				temp_outbox = temp_outbox.lstrip( ':' )		#	That pesky IRC protocol colon.
 				temp_outbox = 'IRC: <' + nick + '> ' + temp_outbox
 				self.outbox.append( temp_outbox )
+				self.say ( 'This notation is no longer required.' )
+
+			if sdata[-1:] == ['>MC']:
+				temp_outbox = ' '.join( sdata[3:-1] )		#	If they just said ">MC", this will be a null string.
+				temp_outbox = temp_outbox.lstrip( ':' )		#	That pesky IRC protocol colon.
+				temp_outbox = 'IRC: <' + nick + '> ' + temp_outbox
+				self.outbox.append( temp_outbox )
+				self.say ( 'This notation is no longer required.' )
 
 			#	As suggested, an alternative way to send things to minecraft.
 			#	The message should start with "Botnick: "
@@ -118,20 +126,36 @@ class IRC:
 				temp_outbox = 'IRC: <' + nick + '> ' 
 				temp_outbox += ' '.join( tmpdata )
 				self.outbox.append( temp_outbox )
+				self.say ( 'This notation is no longer required.' )
 
-			if sdata[-2:] == ['>', 'IRC']:
+			#	Now, handle some special commands:
+			#	TODO: check for leading '?', then check for length >= 2; command keywords
+			if sdata[3].lstrip( ':' ) in ('?server', '?minecraft' ):
+				self.say( 'The minecraft server can be found at ghoti.dyndns.org.  For more information, say "#link 673".' )
+			elif sdata[3].lstrip( ':' ) in ( '?who', '?players' ):
+				self.say( 'Not yet implemented.' )
+			elif sdata[3].lstrip( ':' ) in ( '?map', '?show' ):
+				if len( sdata ) == 6:
+					mapurl = 'http://minecraft.hfbgaming.com/?x=' + str( sdata[4] ) + '&z=' + str( sdata[5] ) + '&zoom=max'
+				elif len( sdata ) == 7:
+					mapurl = 'http://minecraft.hfbgaming.com/?x=' + str( sdata[4] ) + '&y=' + str( sdata[5] ) + '&z=' + str( sdata[6] ) + '&zoom=max'
+				elif len( sdata ) == 4:
+					mapurl = 'http://minecraft.hfbgaming.com/'
+				else:
+					mapurl = 'Usage: ' + sdata[3].strip( ':' ) + ' X [Y] Z'
+				self.say( mapurl )
+			elif sdata[-2:] == ['>', 'IRC']:
 				self.say( 'Seriously?' )
 				temp_outbox = ' '.join( sdata[3:-2] )		#	If they just said "> MC", this will be a null string.
 				temp_outbox = temp_outbox.lstrip( ':' )		#	That pesky IRC protocol colon.
 				temp_outbox = 'IRC: <' + nick + '> ' + temp_outbox
 				self.outbox.append( temp_outbox )
+			else:
+				temp_outbox = ' '.join( sdata[3:] )
+				temp_outbox = temp_outbox.lstrip( ':' )		#	Colonectomy
+				temp_outbox = 'IRC: <' + nick + '> ' + temp_outbox
+				self.outbox.append( temp_outbox )
 				
-			#	Now, handle some special commands:
-			#	TODO: check for leading '?', then check for length >= 2; command keywords
-			if sdata[3].lstrip( ':' ) in ('?server', '?minecraft' ):
-				self.say( 'The minecraft server can be found at ghoti.dyndns.org.  For more information, say "#link 673".' )
-			if sdata[3].lstrip( ':' ) in ( '?who', '?players' ):
-				self.say( 'Not yet implemented.' )
 
 		return( self.data )
 

@@ -15,7 +15,8 @@ def lookup( data ):
 	ds = str(data)
 	if ds.isdigit():
 		#	We've been given a number; loop up the corresponding block and return its first name
-		return str(random.choice(block[int(ds)]) )
+		if ds in block.keys():
+			return str(random.choice(block[int(ds)]) )
 	else:
 		#	Must be a string.  See it matches any of the blocks we know
 		found = []
@@ -117,6 +118,7 @@ blkdefine(   91, ['jack-o-lantern'] )
 #blkdefine(   92, ['cake', 'lie'] )
 
 #	items
+blkdefine(  163, ['bed'] )
 blkdefine(  256, ['iron shovel', 'iron spade', 'steel shovel', 'steel spade'] )
 blkdefine(  257, ['iron pick', 'iron pickaxe', 'steel pick', 'steel pickaxe'] )
 blkdefine(  258, ['iron axe', 'steel axe'] )
