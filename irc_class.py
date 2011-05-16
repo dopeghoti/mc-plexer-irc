@@ -1,3 +1,4 @@
+# coding=UTF-8
 import socket
 import time
 import sys
@@ -105,14 +106,14 @@ class IRC:
 			if sdata[-2:] == ['>', 'MC']:
 				temp_outbox = ' '.join( sdata[3:-2] )		#	If they just said "> MC", this will be a null string.
 				temp_outbox = temp_outbox.lstrip( ':' )		#	That pesky IRC protocol colon.
-				temp_outbox = 'IRC: <' + nick + '> ' + temp_outbox
+				temp_outbox = '§8IRC: §7<§b' + nick + '§7>§a ' + temp_outbox
 				self.outbox.append( temp_outbox )
 				self.say ( 'This notation is no longer required.' )
 
 			if sdata[-1:] == ['>MC']:
 				temp_outbox = ' '.join( sdata[3:-1] )		#	If they just said ">MC", this will be a null string.
 				temp_outbox = temp_outbox.lstrip( ':' )		#	That pesky IRC protocol colon.
-				temp_outbox = 'IRC: <' + nick + '> ' + temp_outbox
+				temp_outbox = '§8IRC: §7<§b' + nick + '§7>§a ' + temp_outbox
 				self.outbox.append( temp_outbox )
 				self.say ( 'This notation is no longer required.' )
 
@@ -123,7 +124,7 @@ class IRC:
 				if tmpdata[-2:] == ['>', 'MC']:
 					tmpdata = sdata[:-2]	#	They said Nick: foo > MC. Suppress the extra '> MC'
 				tmpdata = sdata[4:]
-				temp_outbox = 'IRC: <' + nick + '> ' 
+				temp_outbox = '§8IRC: §7<§b' + nick + '§7>§a '
 				temp_outbox += ' '.join( tmpdata )
 				self.outbox.append( temp_outbox )
 				self.say ( 'This notation is no longer required.' )
@@ -148,12 +149,12 @@ class IRC:
 				self.say( 'Seriously?' )
 				temp_outbox = ' '.join( sdata[3:-2] )		#	If they just said "> MC", this will be a null string.
 				temp_outbox = temp_outbox.lstrip( ':' )		#	That pesky IRC protocol colon.
-				temp_outbox = 'IRC: <' + nick + '> ' + temp_outbox
+				temp_outbox = '§8IRC: §7<§b' + nick + '§7>§a ' + temp_outbox
 				self.outbox.append( temp_outbox )
 			else:
 				temp_outbox = ' '.join( sdata[3:] )
 				temp_outbox = temp_outbox.lstrip( ':' )		#	Colonectomy
-				temp_outbox = 'IRC: <' + nick + '> ' + temp_outbox
+				temp_outbox = '§8IRC: §7<§b' + nick + '§7>§a ' + temp_outbox
 				self.outbox.append( temp_outbox )
 				
 

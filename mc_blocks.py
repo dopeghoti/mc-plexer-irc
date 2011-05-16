@@ -1,4 +1,5 @@
 #!/usr/bin/python
+# coding=UTF-8
 #	A dictionary of block and item code types
 import random
 random.seed()
