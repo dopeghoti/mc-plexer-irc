@@ -42,6 +42,7 @@ mc_conn.connect()
 
 if( mc_conn.status['connected'] ):
 	sock_list.append( mc_conn.socket )
+	mc_conn.cmd( 'say §7[§2!§7] VoxelHead Online.')
 
 # sock_list = [ mc_conn.socket, irc_conn.socket ]
 
@@ -75,7 +76,7 @@ try:
 				#print( repr ( mparts[2] ) )
 				if mparts[2][0] == "\x01":
 					if mparts[2] == '\x01ACTION':
-						message = "IRC: * " + mparts[1][1:-1] + " " + " ".join( mparts[ 3: ] )
+						message = mparts[0] + " §a* " + mparts[1].replace('<','').replace('>','') + " " + " ".join( mparts[ 3: ] )
 				mc_conn.cmd( 'say ' + message )
 			irc_conn.outbox = []
 
@@ -109,6 +110,7 @@ try:
 #	Exit on a ^C or other exception
 except KeyboardInterrupt:
     print 'Exiting.'
+    mc_conn.cmd( 'say §7[§c!§7] VoxelHead Offline.' )
     irc_conn.disconnect( 'Process caught SIGINT' )
 #except Exception, e:
 #    print 'Got exception: ' + e.__str__()

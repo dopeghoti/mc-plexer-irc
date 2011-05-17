@@ -12,6 +12,7 @@ class IRC:
 	nick = ''
 	channel = ''
 	status = { 'connected' : False, 'registered' : False, 'joined' : False}
+	join_ok = False
 	chanlist = []
 	data = ''
 	buffer = ''
@@ -80,7 +81,8 @@ class IRC:
 		elif sdata[1] == '433':				#	Nick in use
 			self.nick += '_'
 			self.register()
-		elif sdata[1] in ('375', '372', '376'):		#	MOTD
+		elif sdata[1] in ('375', '372', '376'):		#	MOTD; clear to /JOIN
+			self.join_ok = True
 			self.print_next_event = False
 		elif ( ( sdata[1] == 'PRIVMSG' ) and ( ( sdata[2] == self.channel ) or ( sdata[2] == self.nick ) ) ):
 			#	print( 'IRC > Message for me!')		#	XXX
@@ -106,14 +108,14 @@ class IRC:
 			if sdata[-2:] == ['>', 'MC']:
 				temp_outbox = ' '.join( sdata[3:-2] )		#	If they just said "> MC", this will be a null string.
 				temp_outbox = temp_outbox.lstrip( ':' )		#	That pesky IRC protocol colon.
-				temp_outbox = '§8IRC: §7<§b' + nick + '§7>§a ' + temp_outbox
+				temp_outbox = '§8[#] §7<§b' + nick + '§7>§a ' + temp_outbox
 				self.outbox.append( temp_outbox )
 				self.say ( 'This notation is no longer required.' )
 
 			if sdata[-1:] == ['>MC']:
 				temp_outbox = ' '.join( sdata[3:-1] )		#	If they just said ">MC", this will be a null string.
 				temp_outbox = temp_outbox.lstrip( ':' )		#	That pesky IRC protocol colon.
-				temp_outbox = '§8IRC: §7<§b' + nick + '§7>§a ' + temp_outbox
+				temp_outbox = '§8[#] §7<§b' + nick + '§7>§a ' + temp_outbox
 				self.outbox.append( temp_outbox )
 				self.say ( 'This notation is no longer required.' )
 
@@ -124,7 +126,7 @@ class IRC:
 				if tmpdata[-2:] == ['>', 'MC']:
 					tmpdata = sdata[:-2]	#	They said Nick: foo > MC. Suppress the extra '> MC'
 				tmpdata = sdata[4:]
-				temp_outbox = '§8IRC: §7<§b' + nick + '§7>§a '
+				temp_outbox = '§8[#] §7<§b' + nick + '§7>§a '
 				temp_outbox += ' '.join( tmpdata )
 				self.outbox.append( temp_outbox )
 				self.say ( 'This notation is no longer required.' )
@@ -135,6 +137,8 @@ class IRC:
 				self.say( 'The minecraft server can be found at ghoti.dyndns.org.  For more information, say "#link 673".' )
 			elif sdata[3].lstrip( ':' ) in ( '?who', '?players' ):
 				self.say( 'Not yet implemented.' )
+			elif sdata[3].lstrip( ':' ) in ( '?colourtest' ):
+				self.say( '9Test, color and back to normal.' )
 			elif sdata[3].lstrip( ':' ) in ( '?map', '?show' ):
 				if len( sdata ) == 6:
 					mapurl = 'http://minecraft.hfbgaming.com/?x=' + str( sdata[4] ) + '&z=' + str( sdata[5] ) + '&zoom=max'
@@ -149,12 +153,12 @@ class IRC:
 				self.say( 'Seriously?' )
 				temp_outbox = ' '.join( sdata[3:-2] )		#	If they just said "> MC", this will be a null string.
 				temp_outbox = temp_outbox.lstrip( ':' )		#	That pesky IRC protocol colon.
-				temp_outbox = '§8IRC: §7<§b' + nick + '§7>§a ' + temp_outbox
+				temp_outbox = '§8[#] §7<§b' + nick + '§7>§a ' + temp_outbox
 				self.outbox.append( temp_outbox )
 			else:
 				temp_outbox = ' '.join( sdata[3:] )
 				temp_outbox = temp_outbox.lstrip( ':' )		#	Colonectomy
-				temp_outbox = '§8IRC: §7<§b' + nick + '§7>§a ' + temp_outbox
+				temp_outbox = '§8[#] §7<§b' + nick + '§7>§a ' + temp_outbox
 				self.outbox.append( temp_outbox )
 				
 
@@ -173,7 +177,8 @@ class IRC:
 		print ( 'IRC < ' + text )
 
 	def join( self ):
-		print( 'Attempting to join ' + self.channel )
-		self.send( 'JOIN ' + self.channel )
-		self.status['joined'] = True
+		if self.join_ok:
+			print( 'Attempting to join ' + self.channel )
+			self.send( 'JOIN ' + self.channel )
+			self.status['joined'] = True
 		
