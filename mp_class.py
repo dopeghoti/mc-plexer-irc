@@ -20,6 +20,7 @@ class multiplexer_connection:
 	buffer = ''
 	data = ''
 	events = []
+	players = []
 
 	def __init__( self, sockfile, port = None, password = None ):
 		self.sockfile = sockfile
@@ -141,23 +142,24 @@ class multiplexer_connection:
 							elif len(chatter) > 5 and ( chatter.upper()[-5:] == '> IRC' or chatter.upper()[-4:] == '>IRC' ):
 								# Someone is talking to IRC, old-school.
 								chatter = chatter[:-3]
-								self.outbox.append('<' + talker + '> ' + chatter)
+								self.outbox.append( '14<9' + talker + '14> 11' + chatter )
 								self.cmd( 'tell ' + talker + ' [*] That notation is no longer needed.' )
 							else:
 								if talker != "CONSOLE":
 									#	chatter = chatter[:-3]
-									self.outbox.append( '<' + talker + '> ' + chatter )
+									self.outbox.append( '14<9' + talker + '14> 11' + chatter )
 
 					elif  eparts[3][0] == "*":
 						#	Someone is acting
 						#	self.outbox.append (' action stub ' ) 
                                                 talker  = eparts[4]       # strip the leading and trailing brackets
 						chatter = ' '.join(eparts[5:])
-						self.outbox.append( ' * ' + talker + ' ' + chatter )
+						self.outbox.append( ' 11* 9' + talker + ' 11' + chatter )
 
 					elif ' '.join(eparts[3:5]) == 'Connected players:':
 						# Someone asked who's playing.  Public knowledge, so relay it to all.
 						self.cmd('say [*] Currently playing: ' + ' '.join(eparts[5:]))
+						self.players = eparts[5:]
 			self.events = []
 
 
