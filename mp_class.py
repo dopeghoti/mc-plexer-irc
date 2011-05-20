@@ -75,6 +75,23 @@ class multiplexer_connection:
 		print( 'Sending command to Multiplexer: ' + text )
 		self.socket.send( text + '\r\n' )
 
+	def say( self, text ):
+		line = ''
+		tsl = text.split()
+		while tsl:
+			if len(line) + len( tsl[0] ) + 1 < 100:
+				line += tsl.pop( 0 ) + ' '
+			else:
+				if len( tsl[0] ) > 85:
+					tsl[0] = '§8[REDACTED]§a'
+				else:
+					self.cmd( 'say ' + line )
+					line = '§8[^]§a '
+		if line != '§8[^]§a ':
+			self.cmd( 'say ' + line )
+
+
+
 	def cycle( self ):
 		self.data = self.socket.recv( 128 )
 		self.buffer += self.data
