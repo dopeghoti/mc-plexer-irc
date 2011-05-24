@@ -74,10 +74,11 @@ try:
 				print( 'MCM < ' +  message )
 				mparts = message.split()
 				#print( repr ( mparts[2] ) )
-				if mparts[2][0] == "\x01":
-					if mparts[2] == '\x01ACTION':
-						message = mparts[0] + " §a* " + mparts[1].replace('<','').replace('>','') + " " + " ".join( mparts[ 3: ] )
-				mc_conn.say( message )
+				if len( mparts ) > 2:
+					if mparts[2][0] == "\x01":
+						if mparts[2] == '\x01ACTION':
+							message = mparts[0] + " §a* " + mparts[1].replace('<','').replace('>','') + " " + " ".join( mparts[ 3: ] )
+					mc_conn.say( message )
 			irc_conn.outbox = []
 
 #	More vestigal code from the generic client.

@@ -77,19 +77,27 @@ class multiplexer_connection:
 
 	def say( self, text ):
 		line = ''
-		tsl = text.split()
-		while tsl:
-			if len(line) + len( tsl[0] ) + 1 < 100:
-				line += tsl.pop( 0 ) + ' '
-			else:
-				if len( tsl[0] ) > 85:
-					tsl[0] = '§8[REDACTED]§a'
-				else:
-					self.cmd( 'say ' + line )
-					line = '§8[^]§a '
-		if line != '§8[^]§a ':
-			self.cmd( 'say ' + line )
+		surline = '§8[^]§a '
+		writeline = False
+		#	Find "words" that are too long, and redact them.
+		wordlist = [ word if len( word ) < 85 else word[:4] + '§8[...]§a' + word[-4:] for word in text.split() ]
 
+		#	Now to make it MC-size bites.
+		for word in wordlist:
+			if len( line ) + len( word ) > 100:
+				if writeline:
+					self.cmd( 'say ' + line )
+					line = surline
+					writeline = False
+				else:
+					#	We should never be here, but cry if we are.
+					print( 'MCM> Something went wrong in mp_class.say() with line:' )
+					print( 'MCM> ' + text )
+			else:
+				line = line + word + ' '
+				writeline = True
+		if writeline:
+			self.cmd( 'say ' + line )
 
 
 	def cycle( self ):
