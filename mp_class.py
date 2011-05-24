@@ -83,21 +83,34 @@ class multiplexer_connection:
 		wordlist = [ word if len( word ) < 85 else word[:4] + '§8[...]§a' + word[-4:] for word in text.split() ]
 
 		#	Now to make it MC-size bites.
-		for word in wordlist:
-			if len( line ) + len( word ) > 100:
-				if writeline:
-					self.cmd( 'say ' + line )
-					line = surline
-					writeline = False
-				else:
-					#	We should never be here, but cry if we are.
-					print( 'MCM> Something went wrong in mp_class.say() with line:' )
-					print( 'MCM> ' + text )
-			else:
-				line = line + word + ' '
-				writeline = True
-		if writeline:
-			self.cmd( 'say ' + line )
+		#for word in wordlist:
+			#if len( line ) + len( word ) > 100:
+				#if writeline:
+					#self.cmd( 'say ' + line )
+					#line = surline
+					#writeline = False
+				#else:
+					##	We should never be here, but cry if we are.
+					#print( 'MCM> Something went wrong in mp_class.say() with line:' )
+					#print( 'MCM> ' + text )
+			#else:
+				#line = line + word + ' '
+				#writeline = True
+		#if writeline:
+			#self.cmd( 'say ' + line )
+
+		#	Tack a False onto the end; watch for it to stop spitting out text.
+		wordlist.append( False )
+
+		while wordlist:
+			curr_word = wordlist.pop( 0 )
+			if not curr_word or len( line ) + len( curr_word ) > 100:
+				self.cmd( 'say ' + line )
+				time.sleep( 0.25 )
+				line = surline
+			if curr_word:
+				line = line + ' ' + curr_word
+
 
 
 	def cycle( self ):
