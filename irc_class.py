@@ -171,8 +171,13 @@ class IRC:
 		self.buffer = self.events.pop()
 
 	def send( self, text ):
-		self.socket.send( text + '\r\n' )
 		print ( 'IRC < ' + text )
+		text += '\r\n'
+		tosend = len( text )
+		while tosend:
+			tosend -= self.socket.send( text )
+			text = text[tosend:]
+			select.select( [], [ self.socket ], [] )
 
 	def join( self ):
 		if self.join_ok:
