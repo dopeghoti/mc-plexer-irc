@@ -51,7 +51,7 @@ class multiplexer_connection:
 			data = self.socket.recv( 96 )
 			if data[0] == '-':
 				print( '  Got password request.  Sending password. ')
-				self.socket.send( self.password + '\r\n' )
+				self.send( self.password + '\r\n' )
 				data = self.socket.recv( 4096 )
 				if data[0] == '+':
 					self.status['authenticated'] = True
@@ -66,14 +66,21 @@ class multiplexer_connection:
 
 	def disconnect( self ):
 		print ('Closing connection to Multiplexer..' )
-		self.socket.send( '' )
+		self.send( '' )
 		self.status['connected'] = False
 		self.status['authenticated'] = False
 		self.socket.close()
 
 	def cmd( self, text ):
 		print( 'Sending command to Multiplexer: ' + text )
-		self.socket.send( text + '\r\n' )
+		self.send( text + '\r\n' )
+
+	def send( self, text ):
+		tosend = len( text )
+		while tosend:
+			tosend -= self.socket.send( text )
+			text = text[tosend:]
+			select.select( [], [ self.socket ], [] )
 
 	def say( self, text ):
 		line = ''
@@ -106,7 +113,6 @@ class multiplexer_connection:
 			curr_word = wordlist.pop( 0 )
 			if not curr_word or len( line ) + len( curr_word ) > 100:
 				self.cmd( 'say ' + line )
-				time.sleep( 0.25 )
 				line = surline
 			if curr_word:
 				line = line + ' ' + curr_word
