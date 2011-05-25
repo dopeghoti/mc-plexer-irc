@@ -174,10 +174,11 @@ class IRC:
 		print ( 'IRC < ' + text )
 		text += '\r\n'
 		tosend = len( text )
+		tosend -= self.socket.send( text )
 		while tosend:
-			tosend -= self.socket.send( text )
-			text = text[tosend:]
 			select.select( [], [ self.socket ], [] )
+			text = text[tosend:]
+			tosend -= self.socket.send( text )
 
 	def join( self ):
 		if self.join_ok:

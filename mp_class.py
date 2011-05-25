@@ -77,10 +77,11 @@ class multiplexer_connection:
 
 	def send( self, text ):
 		tosend = len( text )
+		tosend -= self.socket.send( text )
 		while tosend:
-			tosend -= self.socket.send( text )
-			text = text[tosend:]
 			select.select( [], [ self.socket ], [] )
+			text = text[tosend:]
+			tosend -= self.socket.send( text )
 
 	def say( self, text ):
 		line = ''
