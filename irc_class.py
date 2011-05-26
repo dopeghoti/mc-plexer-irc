@@ -137,6 +137,10 @@ class IRC:
 				self.say( 'The minecraft server can be found at ghoti.dyndns.org.  For more information, say "#link 673".' )
 			elif sdata[3].lstrip( ':' ) in ( '?who', '?players' ):
 				self.say( 'Not yet implemented.' )
+			elif sdata[3].lstrip( ':' ) in ( '!rehash ' ):
+				self.say( 'Rehashing.' )
+				self.disconnect( 'Asked to rehash' )
+
 			elif sdata[3].lstrip( ':' ) in ( '?map', '?show' ):
 				if len( sdata ) == 6:
 					mapurl = 'http://minecraft.hfbgaming.com/?x=' + str( sdata[4] ) + '&z=' + str( sdata[5] ) + '&zoom=max'
@@ -158,8 +162,13 @@ class IRC:
 				temp_outbox = temp_outbox.lstrip( ':' )		#	Colonectomy
 				temp_outbox = '§8[#] §7<§b' + nick + '§7>§a ' + temp_outbox
 				self.outbox.append( temp_outbox )
-				
-
+		elif ( ( sdata[1] == 'TOPIC' ) and ( ( sdata[2] == self.channel ) ) ):
+			#	Someone changed the topic
+			#	:Nick!ident@host.example.com TOPIC ##loafyland :Mary had a little lamb
+			#	\__________[0]_____________/ \[1]/ \___[2]___/ \_______[3:]__________/
+			temp_outbox = ' '.join( sdata[3:] ).lstrip( ':' )
+			temp_outbox = '§8[#] New IRC channel topic:§b ' + temp_outbox
+			self.outbox.append( temp_outbox )
 		return( self.data )
 
 	def say( self, text ):
