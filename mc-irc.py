@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # coding=UTF-8
 import socket
-import multiplexlib
+#import multiplexlib
 import time
 import sys
 import string
