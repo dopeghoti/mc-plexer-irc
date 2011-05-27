@@ -43,7 +43,9 @@ class IRC:
 
 	def disconnect( self, reason ):
 		print( 'Terminating IRC connection..' )
+		self.outbox.append( '§7[§c!§7] VoxelHead Offline.' )
 		self.send( 'QUIT :' + reason )
+		self.socket.close()
 
 	def register( self ):
 		if self.status['registered'] == False:
@@ -103,63 +105,54 @@ class IRC:
 			userhost = sdata[0]
 			nick = userhost.lstrip( ':' ).split( '!' )[0]
 
-			#	At this point, we know the message is to us or the channel we're in.  Let's see if it's for Minecraft.
-			#	The message should end with "> MC".
-			if sdata[-2:] == ['>', 'MC']:
-				temp_outbox = ' '.join( sdata[3:-2] )		#	If they just said "> MC", this will be a null string.
-				temp_outbox = temp_outbox.lstrip( ':' )		#	That pesky IRC protocol colon.
-				temp_outbox = '§8[#] §7<§b' + nick + '§7>§a ' + temp_outbox
-				self.outbox.append( temp_outbox )
-				self.say ( 'This notation is no longer required.' )
-
-			if sdata[-1:] == ['>MC']:
-				temp_outbox = ' '.join( sdata[3:-1] )		#	If they just said ">MC", this will be a null string.
-				temp_outbox = temp_outbox.lstrip( ':' )		#	That pesky IRC protocol colon.
-				temp_outbox = '§8[#] §7<§b' + nick + '§7>§a ' + temp_outbox
-				self.outbox.append( temp_outbox )
-				self.say ( 'This notation is no longer required.' )
-
-			#	As suggested, an alternative way to send things to minecraft.
-			#	The message should start with "Botnick: "
+			#	At this point, we know the message is to us or the channel we're in.  
+			#	Look for special cases, and forward everything else to the outbox.
+			#	The message starts with "Botnick: " (chide the speaker)
 			if sdata[3] == ':' + self.nick + ':':
 				tmpdata = sdata[:]
 				if tmpdata[-2:] == ['>', 'MC']:
 					tmpdata = sdata[:-2]	#	They said Nick: foo > MC. Suppress the extra '> MC'
+				if tmpdata[-1] == '>MC':
+					tmpdata = sdata[:-1]	#	They said Nick: foo >MC. Suppress the extra '>MC'
 				tmpdata = sdata[4:]
 				temp_outbox = '§8[#] §7<§b' + nick + '§7>§a '
 				temp_outbox += ' '.join( tmpdata )
 				self.outbox.append( temp_outbox )
 				self.say ( 'This notation is no longer required.' )
-
-			#	Now, handle some special commands:
+			#	In-IRC Bot Commands:
 			#	TODO: check for leading '?', then check for length >= 2; command keywords
 			if sdata[3].lstrip( ':' ) in ('?server', '?minecraft' ):
 				self.say( 'The minecraft server can be found at ghoti.dyndns.org.  For more information, say "#link 673".' )
 			elif sdata[3].lstrip( ':' ) in ( '?who', '?players' ):
 				self.say( 'Not yet implemented.' )
+			elif sdata[3].lstrip( ':' ) in ( '!rehash ' ):
+				self.say( 'Rehashing.' )
+				self.disconnect( 'Asked to rehash' )
 			elif sdata[3].lstrip( ':' ) in ( '?map', '?show' ):
 				if len( sdata ) == 6:
-					mapurl = 'http://minecraft.hfbgaming.com/?x=' + str( sdata[4] ) + '&z=' + str( sdata[5] ) + '&zoom=max'
+					#	We need to present a Y coordinate.  Assume ground-level
+					mapurl = 'http://minecraft.hfbgaming.com/?x=' + str( sdata[4] ) + '&y=1&z=' + str( sdata[5] ) + '&zoom=max'
 				elif len( sdata ) == 7:
 					mapurl = 'http://minecraft.hfbgaming.com/?x=' + str( sdata[4] ) + '&y=' + str( sdata[5] ) + '&z=' + str( sdata[6] ) + '&zoom=max'
 				elif len( sdata ) == 4:
+					#	No paramaters. Just give the URL
 					mapurl = 'http://minecraft.hfbgaming.com/'
 				else:
+					#	No idea what the user would be asking for. Help em.
 					mapurl = 'Usage: ' + sdata[3].strip( ':' ) + ' X [Y] Z'
 				self.say( mapurl )
-			elif sdata[-2:] == ['>', 'IRC']:
-				self.say( 'Seriously?' )
-				temp_outbox = ' '.join( sdata[3:-2] )		#	If they just said "> MC", this will be a null string.
-				temp_outbox = temp_outbox.lstrip( ':' )		#	That pesky IRC protocol colon.
-				temp_outbox = '§8[#] §7<§b' + nick + '§7>§a ' + temp_outbox
-				self.outbox.append( temp_outbox )
 			else:
 				temp_outbox = ' '.join( sdata[3:] )
 				temp_outbox = temp_outbox.lstrip( ':' )		#	Colonectomy
 				temp_outbox = '§8[#] §7<§b' + nick + '§7>§a ' + temp_outbox
 				self.outbox.append( temp_outbox )
-				
-
+		elif ( ( sdata[1] == 'TOPIC' ) and ( ( sdata[2] == self.channel ) ) ):
+			#	Someone changed the topic
+			#	:Nick!ident@host.example.com TOPIC ##loafyland :Mary had a little lamb
+			#	\__________[0]_____________/ \[1]/ \___[2]___/ \_______[3:]__________/
+			temp_outbox = ' '.join( sdata[3:] ).lstrip( ':' )
+			temp_outbox = '§8[#] New IRC channel topic:§b ' + temp_outbox
+			self.outbox.append( temp_outbox )
 		return( self.data )
 
 	def say( self, text ):
@@ -179,6 +172,7 @@ class IRC:
 			select.select( [], [ self.socket ], [] )
 			text = text[tosend:]
 			tosend -= self.socket.send( text )
+		print ( 'IRC < ' + text )
 
 	def join( self ):
 		if self.join_ok:
