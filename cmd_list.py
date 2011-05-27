@@ -3,7 +3,6 @@
 import os
 import sys
 import time
-import glob
 
 # Directory with player profiles
 profile_dir = '/home/minecraft/world/players'
@@ -49,10 +48,12 @@ def format_time( file_time ):
 		return "now"
 
 
-def query_last( reply, player=None ):
+def query_last( reply, args ):
 	files_orig_case = [ x for x in os.listdir( profile_dir ) if x.endswith(".dat") ]
 
-	if player:
+	if len(args):
+		player = args[0]
+	
 		files_lower_case = [ x.lower() for x in files_orig_case ]
 		player_lower_file = player.lower() + ".dat"
 
@@ -85,16 +86,3 @@ def query_last( reply, player=None ):
 
 		count = len( text )
 		reply.say( "Last %d players: %s" % ( count, ", ".join( text ) ) )
-
-
-#############################
-class Response:
-	def say(self, text):
-		print text
-
-
-#################################
-if len(sys.argv) > 1:
-	query_last( Response(), sys.argv[1] )
-else:
-	query_last( Response() )

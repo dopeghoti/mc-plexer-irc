@@ -6,6 +6,7 @@ import sys
 import string
 import select
 import mc_blocks
+import cmd_last
 
 # Multiplexer configuration settings
 mc_socket = '/home/minecraft/tmp/plexer.sock'
@@ -162,8 +163,9 @@ class multiplexer_connection:
 
 							elif chatter[0] == "?":
 								# It's a command for the bot!
-								botcmds = ['?WHO', '?PLAYERS', '?LOAD', '?WTF', '?TIME', '?MAP', '?MUMBLE']
+								botcmds = ['?WHO', '?PLAYERS', '?LOAD', '?WTF', '?TIME', '?MAP', '?MUMBLE', '?LAST']
 								keyword = chatter.split(' ')[0][1:].upper()
+								args = chatter.split(' ')[1:]
 								if keyword == "HELP":
 									self.cmd('say Available commands:')
 									self.cmd('say [*] ' + ' '.join(botcmds))
@@ -181,6 +183,8 @@ class multiplexer_connection:
 									self.cmd('say [*] Not yet implemented, ' + talker)
 								elif keyword.upper in ['WTF', 'TIME']:
 									self.cmd('say [*] Not yet implemented, ' + talker)
+								elif keyword.upper in ['LAST']:
+									cmd_last.query_last( self, args )
 							elif chatter[0] == "/":
 								#	Someone issued a command to the server. Do nothing.
 								pass
