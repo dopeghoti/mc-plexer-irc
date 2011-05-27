@@ -172,7 +172,6 @@ class IRC:
 			select.select( [], [ self.socket ], [] )
 			text = text[tosend:]
 			tosend -= self.socket.send( text )
-		print ( 'IRC < ' + text )
 
 	def join( self ):
 		if self.join_ok:
