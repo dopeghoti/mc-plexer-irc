@@ -179,7 +179,7 @@ class multiplexer_connection:
 									self.cmd('say [*] Current system load is ' + l)
 								elif keyword in ('MAP', 'GPS'):
 									self.cmd('say [*] Not yet implemented, ' + talker)
-								elif keyword.upper in ['WTF', 'TIME']:
+								elif keyword in ['WTF', 'TIME']:
 									self.cmd('say [*] Not yet implemented, ' + talker)
 							elif chatter[0] == "/":
 								#	Someone issued a command to the server. Do nothing.

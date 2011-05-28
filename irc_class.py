@@ -125,7 +125,7 @@ class IRC:
 				self.say( 'The minecraft server can be found at ghoti.dyndns.org.  For more information, say "#link 673".' )
 			elif sdata[3].lstrip( ':' ) in ( '?who', '?players' ):
 				self.say( 'Not yet implemented.' )
-			elif sdata[3].lstrip( ':' ) in ( '!rehash ' ):
+			elif sdata[3].lstrip( ':' ) in ( '!rehash', ):
 				self.say( 'Rehashing.' )
 				self.disconnect( 'Asked to rehash' )
 			elif sdata[3].lstrip( ':' ) in ( '?map', '?show' ):
