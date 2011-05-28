@@ -142,7 +142,7 @@ class IRC:
 					#	No idea what the user would be asking for. Help em.
 					mapurl = 'Usage: ' + sdata[3].strip( ':' ) + ' X [Y] Z'
 				self.say( mapurl )
-			elif sdata[3].lstrip( ':' ) in ( '?last' ):
+			elif sdata[3].lstrip( ':' ) in ( '?last', ):
 				cmd_last.query_last( self, sdata[4:] )
 			else:
 				temp_outbox = ' '.join( sdata[3:] )

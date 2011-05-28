@@ -5,7 +5,7 @@ import sys
 import time
 
 # Directory with player profiles
-profile_dir = '/home/minecraft/world/players'
+profile_dir = '/home/minecraft/loafy/players'
 
 # How many players to show if no player name was given to query_last()
 query_last_num = 5
