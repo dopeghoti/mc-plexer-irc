@@ -22,8 +22,9 @@ class IRC:
 	print_next_event = True
 	outbox = []
 
-	def __init__( self, server, port, nick, channel ):
+	def __init__( self, dispatcher, server, port, nick, channel ):
 		#TODO: add error-checking and sanity checks
+		self.dispatcher = dispatcher
 		self.server = server
 		self.port = port
 		self.nick = nick
@@ -108,47 +109,27 @@ class IRC:
 
 			#	At this point, we know the message is to us or the channel we're in.  
 			#	Look for special cases, and forward everything else to the outbox.
-			#	The message starts with "Botnick: " (chide the speaker)
-			if sdata[3] == ':' + self.nick + ':':
-				tmpdata = sdata[:]
-				if tmpdata[-2:] == ['>', 'MC']:
-					tmpdata = sdata[:-2]	#	They said Nick: foo > MC. Suppress the extra '> MC'
-				if tmpdata[-1] == '>MC':
-					tmpdata = sdata[:-1]	#	They said Nick: foo >MC. Suppress the extra '>MC'
-				tmpdata = sdata[4:]
-				temp_outbox = '§8[#] §7<§b' + nick + '§7>§a '
-				temp_outbox += ' '.join( tmpdata )
-				self.outbox.append( temp_outbox )
-				self.say ( 'This notation is no longer required.' )
+
 			#	In-IRC Bot Commands:
-			#	TODO: check for leading '?', then check for length >= 2; command keywords
-			if sdata[3].lstrip( ':' ) in ('?server', '?minecraft' ):
-				self.say( 'The minecraft server can be found at ghoti.dyndns.org.  For more information, say "#link 673".' )
-			elif sdata[3].lstrip( ':' ) in ( '?who', '?players' ):
-				self.say( 'Not yet implemented.' )
-			elif sdata[3].lstrip( ':' ) in ( '!rehash', ):
-				self.say( 'Rehashing.' )
-				self.disconnect( 'Asked to rehash' )
-			elif sdata[3].lstrip( ':' ) in ( '?map', '?show' ):
-				if len( sdata ) == 6:
-					#	We need to present a Y coordinate.  Assume ground-level
-					mapurl = 'http://minecraft.hfbgaming.com/?x=' + str( sdata[4] ) + '&y=1&z=' + str( sdata[5] ) + '&zoom=max'
-				elif len( sdata ) == 7:
-					mapurl = 'http://minecraft.hfbgaming.com/?x=' + str( sdata[4] ) + '&y=' + str( sdata[5] ) + '&z=' + str( sdata[6] ) + '&zoom=max'
-				elif len( sdata ) == 4:
-					#	No paramaters. Just give the URL
-					mapurl = 'http://minecraft.hfbgaming.com/'
+			#	TODO: check for length >= 2; command keywords
+			if sdata[3].lstrip( ':' )[:1] in ['?','!']:
+				keyword = sdata[3].lstrip( ':' ).upper()
+				args = sdata[4:]
+				if sdata[2] == self.channel:
+					self.dispatcher.notify_cmd( self, nick, keyword, args )
 				else:
-					#	No idea what the user would be asking for. Help em.
-					mapurl = 'Usage: ' + sdata[3].strip( ':' ) + ' X [Y] Z'
-				self.say( mapurl )
-			elif sdata[3].lstrip( ':' ) in ( '?last', ):
-				cmd_last.query_last( self, sdata[4:] )
-			else:
+					self.dispatcher.notify_cmd( private_reply( self, nick ), nick, keyword, args )					
+
+			# Chat text in channel. Forward to Minecraft server
+			elif sdata[2] == self.channel:
 				temp_outbox = ' '.join( sdata[3:] )
 				temp_outbox = temp_outbox.lstrip( ':' )		#	Colonectomy
 				temp_outbox = '§8[#] §7<§b' + nick + '§7>§a ' + temp_outbox
 				self.outbox.append( temp_outbox )
+			
+			# Chat text in /QUERY or /MSG. Do not forward and complain to the user
+			else:
+				self.send( 'PRIVMSG ' + nick + ' :[!] Messages only forwarded from channel. Type "?help" for command list.' )
 		elif ( ( sdata[1] == 'TOPIC' ) and ( ( sdata[2] == self.channel ) ) ):
 			#	Someone changed the topic
 			#	:Nick!ident@host.example.com TOPIC ##loafyland :Mary had a little lamb
@@ -182,3 +163,11 @@ class IRC:
 			self.send( 'JOIN ' + self.channel )
 			self.status['joined'] = True
 		
+# Wrapper class around IRC.say() to send a private reponse to commands from a /MSG or /QUERY
+class private_reply(object):
+	def __init__( self, irc, nick ):
+		self.irc = irc
+		self.nick = nick
+		
+	def say( self, text ):
+		self.irc.send( 'PRIVMSG ' + self.nick + ' :' + text )
