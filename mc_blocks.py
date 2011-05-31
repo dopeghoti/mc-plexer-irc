@@ -16,7 +16,7 @@ def lookup( data ):
 	ds = str(data)
 	if ds.isdigit():
 		#	We've been given a number; loop up the corresponding block and return its first name
-		if ds in block.keys():
+		if int(ds) in block.keys():
 			return str(random.choice(block[int(ds)]) )
 	else:
 		#	Must be a string.  See it matches any of the blocks we know
