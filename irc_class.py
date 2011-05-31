@@ -109,29 +109,27 @@ class IRC:
 
 			#	At this point, we know the message is to us or the channel we're in.  
 			#	Look for special cases, and forward everything else to the outbox.
-			#	The message starts with "Botnick: " (chide the speaker)
-			if sdata[3] == ':' + self.nick + ':':
-				tmpdata = sdata[:]
-				if tmpdata[-2:] == ['>', 'MC']:
-					tmpdata = sdata[:-2]	#	They said Nick: foo > MC. Suppress the extra '> MC'
-				if tmpdata[-1] == '>MC':
-					tmpdata = sdata[:-1]	#	They said Nick: foo >MC. Suppress the extra '>MC'
-				tmpdata = sdata[4:]
-				temp_outbox = '§8[#] §7<§b' + nick + '§7>§a '
-				temp_outbox += ' '.join( tmpdata )
-				self.outbox.append( temp_outbox )
-				self.say ( 'This notation is no longer required.' )
+
 			#	In-IRC Bot Commands:
 			#	TODO: check for length >= 2; command keywords
 			if sdata[3].lstrip( ':' )[:1] in ['?','!']:
 				keyword = sdata[3].lstrip( ':' ).upper()
 				args = sdata[4:]
-				self.dispatcher.notify_cmd( self, nick, keyword, args )
-			else:
+				if sdata[2] == self.channel:
+					self.dispatcher.notify_cmd( self, nick, keyword, args )
+				else:
+					self.dispatcher.notify_cmd( private_reply( self, nick ), nick, keyword, args )					
+
+			# Chat text in channel. Forward to Minecraft server
+			elif sdata[2] == self.channel:
 				temp_outbox = ' '.join( sdata[3:] )
 				temp_outbox = temp_outbox.lstrip( ':' )		#	Colonectomy
 				temp_outbox = '§8[#] §7<§b' + nick + '§7>§a ' + temp_outbox
 				self.outbox.append( temp_outbox )
+			
+			# Chat text in /QUERY or /MSG. Do not forward and complain to the user
+			else:
+				self.send( 'PRIVMSG ' + nick + ' :[!] Messages only forwarded from channel. Type "?help" for command list.' )
 		elif ( ( sdata[1] == 'TOPIC' ) and ( ( sdata[2] == self.channel ) ) ):
 			#	Someone changed the topic
 			#	:Nick!ident@host.example.com TOPIC ##loafyland :Mary had a little lamb
@@ -165,3 +163,11 @@ class IRC:
 			self.send( 'JOIN ' + self.channel )
 			self.status['joined'] = True
 		
+# Wrapper class around IRC.say() to send a private reponse to commands from a /MSG or /QUERY
+class private_reply(object):
+	def __init__( self, irc, nick ):
+		self.irc = irc
+		self.nick = nick
+		
+	def say( self, text ):
+		self.irc.send( 'PRIVMSG ' + self.nick + ' :' + text )

@@ -10,6 +10,8 @@ import select
 import irc_class
 import mp_class
 
+import cmd_last
+
 # TODO: External configuration files
 
 # IRC configuration settings
