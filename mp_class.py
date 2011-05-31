@@ -21,13 +21,13 @@ class multiplexer_connection:
 	buffer = ''
 	data = ''
 	events = []
-	players = []
 
-	def __init__( self, sockfile, port = None, password = None ):
+	def __init__( self, dispatcher, sockfile, port = None, password = None ):
+		self.dispatcher = dispatcher
 		self.sockfile = sockfile
 		self.password = password
 		self.port = port
-	
+
 	def connect( self ):
 		print ( 'Connecting to Minecraft Multiplexer..' )
 		try:
@@ -161,30 +161,11 @@ class multiplexer_connection:
 #								else:
 #									self.cmd( 'say [*] Usage: ?map X [Y] Z' )
 
-							elif chatter[0] == "?":
+							elif chatter[0] in ["?", "!"]:
 								# It's a command for the bot!
-								botcmds = ['?WHO', '?PLAYERS', '?LOAD', '?WTF', '?TIME', '?MAP', '?MUMBLE', '?LAST']
-								keyword = chatter.split(' ')[0][1:].upper()
+								keyword = chatter.split(' ')[0].upper()
 								args = chatter.split(' ')[1:]
-								if keyword == "HELP":
-									self.cmd('say Available commands:')
-									self.cmd('say [*] ' + ' '.join(botcmds))
-								elif keyword in ['WHO', 'W', 'PLAYERS']:
-									self.cmd('list')
-								elif keyword in ['MUMBLE']:
-									self.cmd( 'say [*] Mumble server at wold.its.lsu.edu' )
-									self.cmd( 'say [*] Contact DG, Thvortex, or Sunfall for PW.')
-								elif keyword == 'LOAD':
-									u = open('/proc/loadavg', 'r')
-									l = u.readline().split()[0]
-									u.close()
-									self.cmd('say [*] Current system load is ' + l)
-								elif keyword in ('MAP', 'GPS'):
-									self.cmd('say [*] Not yet implemented, ' + talker)
-								elif keyword in ['WTF', 'TIME']:
-									self.cmd('say [*] Not yet implemented, ' + talker)
-								elif keyword in ['LAST']:
-									cmd_last.query_last( self, args )
+								self.dispatcher.notify_cmd( self, talker, keyword, args )
 							elif chatter[0] == "/":
 								#	Someone issued a command to the server. Do nothing.
 								pass
@@ -206,11 +187,10 @@ class multiplexer_connection:
 						self.outbox.append( ' 11* 9' + talker + ' 11' + chatter )
 
 					elif ' '.join(eparts[3:5]) == 'Connected players:':
-						# Someone asked who's playing.  Public knowledge, so relay it to all.
-						self.cmd('say [*] Currently playing: ' + ' '.join(eparts[5:]))
-						self.players = eparts[5:]
+						self.dispatcher.notify_players( eparts[5:] )
+					elif ' '.join(eparts[5:7]) == 'logged in':
+						self.dispatcher.notify_login( eparts[3] )
 			self.events = []
-
 
 #	End of class definition
 

@@ -27,9 +27,75 @@ mc_password = 'aardvark'
 
 sock_list = []
 
+
+# Common dispatcher class for commands from in game and from IRC
+class cmd_dispatcher:
+	def __init__( self ):
+		self.online_player_listeners = []
+
+	def request_players( self, listener ):
+		# Called by bot commands to register a listener for output of server "list" command
+		global mc_conn
+		self.online_player_listeners.append( listener )
+		mc_conn.cmd('list')
+
+	def notify_players( self, players ):
+		# Someone asked who's playing. Relay it to one of the listening objects
+		if len(self.online_player_listeners):
+			listener = self.online_player_listeners[0]
+			del self.online_player_listeners[0]
+			listener.notify_players( players )
+
+	def notify_login( self, player ):
+		# Touch profile timestamp to record login time for ?who
+		cmd_last.notify_login( player )
+
+	def notify_cmd( self, reply, talker, keyword, args ):
+		botcmds = ['?WHO', '?LOAD', '?MAP', '?MUMBLE', '?LAST', '?SERVER', '!REHASH']
+		if keyword in ["?HELP"]:
+			reply.say( '[*] Available commands:' )
+			reply.say( '[*] ' + ' '.join(botcmds) )
+		elif keyword in ['?WHO', '?W', '?PLAYERS']:
+			self.request_players( cmd_last.who_listener( reply ) )
+		elif keyword in ['?MUMBLE']:
+			reply.say( '[*] Mumble server at wold.its.lsu.edu' )
+			reply.say( '[*] Contact DopeGhoti, Thvortex, or Sunfall (Phil_Bordelon) for password.')
+		elif keyword in ['?LOAD']:
+			u = open( '/proc/loadavg', 'r' )
+			l = u.readline().split()[0]
+			u.close()
+			reply.say( '[*] Current system load is ' + l )
+		elif keyword in ['?MAP', '?GPS', '?SHOW']:
+			if len( args ) == 2:
+				#	We need to present a Y coordinate.  Assume ground-level
+				mapurl = 'http://minecraft.hfbgaming.com/?x=' + str( args[0] ) + '&y=64&z=' + str( args[1] ) + '&zoom=max'
+			elif len( args ) == 3:
+				mapurl = 'http://minecraft.hfbgaming.com/?x=' + str( args[0] ) + '&y=' + str( args[1] ) + '&z=' + str( args[2] ) + '&zoom=max'
+			elif len( args ) == 0:
+				#	No paramaters. Just give the URL
+				mapurl = 'http://minecraft.hfbgaming.com/'
+			else:
+				#	No idea what the user would be asking for. Help em.
+				mapurl = 'Usage: ' + keyword + ' X [Y] Z'
+			reply.say( mapurl )
+		elif keyword in ['?WTF', '?TIME']:
+			reply.say( '[*] Not yet implemented, ' + talker )
+		elif keyword in ['?LAST']:
+			cmd_last.query_last( reply, args )
+		elif keyword in ['?SERVER', '?MINECRAFT']:
+			reply.say( '[*] The minecraft server can be found at ghoti.dyndns.org.' )
+			reply.say( '[*] For more information, say "#link 673" in channel".' )
+		elif keyword in ['!REHASH']:
+			global irc_conn
+			reply.say( '[*] Rehashing.' )
+			irc_conn.disconnect( 'Asked to rehash' )
+
+
+dispatcher = cmd_dispatcher()
+
 # So, let's connect to IRC!
 print( 'Attempting to connect to IRC' )
-irc_conn = irc_class.IRC( irc_server, irc_port, irc_nick, irc_channel )
+irc_conn = irc_class.IRC( dispatcher, irc_server, irc_port, irc_nick, irc_channel )
 
 if( irc_conn.status['connected'] ):
 	sock_list.append( irc_conn.socket )
@@ -37,7 +103,7 @@ if( irc_conn.status['connected'] ):
 # And now, let's connect to the Minecraft Multiplexer
 # TODO: Exception handling for Plexer not being there to connect to
 print( 'Attempting to connect to Minecraft Multiplexer' )
-mc_conn = mp_class.multiplexer_connection( '/home/minecraft/tmp/plexer.sock', None, mc_password )
+mc_conn = mp_class.multiplexer_connection( dispatcher, '/home/minecraft/tmp/plexer.sock', None, mc_password )
 mc_conn.connect()
 
 if( mc_conn.status['connected'] ):

@@ -10,6 +10,15 @@ profile_dir = '/home/minecraft/world/players'
 # How many players to show if no player name was given to query_last()
 query_last_num = 5
 
+
+class who_listener(object):
+	def __init__( self, reply ):
+		self.reply = reply
+
+	def notify_players( self, players ):
+		self.reply.say( '[*] Currently playing: ' + ' '.join( players ) )
+
+
 def format_time( file_time ):
 	seconds = int( time.time() - file_time )
 
@@ -86,3 +95,8 @@ def query_last( reply, args ):
 
 		count = len( text )
 		reply.say( "Last %d players: %s" % ( count, ", ".join( text ) ) )
+
+
+def notify_login( player ):
+	os.utime( profile_dir + os.sep + player + ".dat", None )
+
