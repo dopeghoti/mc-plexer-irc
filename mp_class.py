@@ -143,12 +143,8 @@ class multiplexer_connection:
 
 							if len(chatter) > 2 and chatter[:2] == '??':
 								# Someone's asking what something is.
-							
 								query = ''.join( chatter[2:] )
-								print("?? query: " + query)
-								answer = mc_blocks.lookup(query)
-								print("?? answer: " + str(answer))
-								self.cmd('say [*] ' + query + ' is ' + str(answer) + '.')
+								mc_blocks.lookup(self, query)
 
 #							elif len(chatter) > 4 and chatter[:4].upper() in ( '?map', '?gps' ):
 #								coords = ''.join( chatter[4:] ).split( ' ' )

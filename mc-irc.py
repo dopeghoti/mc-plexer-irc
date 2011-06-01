@@ -11,6 +11,7 @@ import irc_class
 import mp_class
 
 import cmd_last
+import mc_blocks
 
 # TODO: External configuration files
 
@@ -53,10 +54,12 @@ class cmd_dispatcher:
 		cmd_last.notify_login( player )
 
 	def notify_cmd( self, reply, talker, keyword, args ):
-		botcmds = ['?WHO', '?LOAD', '?MAP', '?MUMBLE', '?LAST', '?SERVER', '!REHASH']
+		botcmds = ['?ID', '?WHO', '?LOAD', '?MAP', '?MUMBLE', '?LAST', '?SERVER', '!REHASH']
 		if keyword in ["?HELP"]:
 			reply.say( '[*] Available commands:' )
 			reply.say( '[*] ' + ' '.join(botcmds) )
+		elif keyword in ['?ID']:
+			mc_blocks.lookup( reply, " ".join( args ) )
 		elif keyword in ['?WHO', '?W', '?PLAYERS']:
 			self.request_players( cmd_last.who_listener( reply ) )
 		elif keyword in ['?MUMBLE']:
@@ -86,7 +89,7 @@ class cmd_dispatcher:
 			cmd_last.query_last( reply, args )
 		elif keyword in ['?SERVER', '?MINECRAFT']:
 			reply.say( '[*] The minecraft server can be found at ghoti.dyndns.org.' )
-			reply.say( '[*] For more information, say "#link 673" in channel".' )
+			reply.say( '[*] For more information, say "#link 673" in channel.' )
 		elif keyword in ['!REHASH']:
 			global irc_conn
 			reply.say( '[*] Rehashing.' )

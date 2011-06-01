@@ -2,45 +2,71 @@
 # coding=UTF-8
 #	A dictionary of block and item code types
 import random
+
+
+# Maximum number of id numbers returned by inexact substring match
+lookup_max_num = 5
+
+
 random.seed()
 #	Initialization
+
 def blkdefine( code, desc ):
 	global block
 	block[code] = []
 	for d in desc:
 		block[code].append(d)
-		
 
-def lookup( data ):
+def describe( id ):
 	global block
-	ds = str(data)
-	if ds.isdigit():
+	return random.choice( block[id] )
+
+def search( data ):
+	found = []
+	for b in block:
+		for text in block[b]:
+			if data == text:
+				return [b]
+				break
+			if data in text.lower().split():
+				found.append(b)
+				break
+	return found
+
+def lookup( reply, data ):
+	global block
+	data = data.strip().lower()
+	if not data:
+		# No query string specified. Print usage info
+		reply.say( '[*] Usage: ?ID number|description' )
+	elif data.isdigit():
 		#	We've been given a number; loop up the corresponding block and return its first name
-		if ds in block.keys():
-			return str(random.choice(block[int(ds)]) )
+		if int(data) in block:
+			reply.say( '[*] Match: ' + describe( int(data) ) )
+		else:
+			reply.say( '[*] No Match' )
 	else:
 		#	Must be a string.  See it matches any of the blocks we know
-		found = []
-		for b in block:
-			if data.lower() in block[b]:
-				found.append(b)
-		if len(found) == 1:
-			return str( found[0] )
-		elif len(found) == 0:
-			return 'No Match'
+		found = search(data)
+		if len(found) == 0:
+			reply.say( '[*] No Match' )
+		elif len(found) > lookup_max_num:
+			reply.say( '[*] Too many (%d) matches. Be more specific.' % len(found) )
 		else:
-			return 'Matches: ' + found.join( ' ' )
+			results = [ "%d (%s)" % ( b, describe(b) ) for b in found ]
+			label = "Match: " if len(found) == 1 else "Matches: "
+			reply.say( '[*] ' + label + ", ".join( results ) )
 
 
 block = {}
 
 #	Blocks
 blkdefine(    0, ['air'] )
-blkdefine(    1, ['stone', 'smooth stone', 'concrete', 'natural stone', 'smooth'] )
+blkdefine(    1, ['stone', 'smooth stone', 'concrete', 'natural stone', 'smooth', 'stone block'] )
 blkdefine(    2, ['grass', 'sod', 'grassy dirt', 'grassy soil'] )
 blkdefine(    3, ['dirt', 'soil'] )
-blkdefine(    4, ['cobblestone', 'cobble'] )
-blkdefine(    5, ['planks', 'wood planks', 'lumber'] )
+blkdefine(    4, ['cobblestone', 'cobble', 'cobble stone'] )
+blkdefine(    5, ['planks', 'wood planks', 'plank', 'wooden planks', 'wood board', 'wooden boards'] )
 blkdefine(    6, ['sapling'] )
 blkdefine(    7, ['adminium', 'bedrock', 'modstone', 'adminite'] )
 blkdefine(    8, ['water', 'flowing water'] )
@@ -52,29 +78,36 @@ blkdefine(   13, ['flint'] )
 blkdefine(   14, ['gold ore', 'raw gold', 'vitamin g', 'unrefined vitamin g'] )
 blkdefine(   15, ['iron ore', 'raw iron', 'vitamin i', 'unrefined vitamin i'] )
 blkdefine(   16, ['coal ore', 'raw coal', 'vitamin c', 'unrefined vitamin c'] )
-blkdefine(   17, ['wood', 'log'] )
-blkdefine(   18, ['leaves', 'foliage'] )
+blkdefine(   17, ['wood', 'log', 'lumber'] )
+blkdefine(   18, ['leaves', 'foliage', 'leaf'] )
 #blkdefine(   19, ['sponge'] )
 blkdefine(   20, ['glass', 'window'] )
 blkdefine(   21, ['lapis lazuli ore', 'raw lapis lazuli', 'vitamin l'] )
 blkdefine(   22, ['lapis lazuli block', 'concentrated vitamin l'] )
 blkdefine(   23, ['dispenser'] )
-blkdefine(   24, ['sandstone'] )
+blkdefine(   24, ['sandstone', 'sand stone'] )
 blkdefine(   25, ['note block', 'music block', 'sound block', 'music box', 'musicbox'] )
-blkdefine(   35, ['wool', 'white wool'] )
-blkdefine(   37, ['yellow flower'] )
+#blkdefine(   26, ['bed', 'mattress'] )
+blkdefine(   27, ['powered rails', 'powered tracks', 'powered rail', 'powered track'] )
+blkdefine(   28, ['detector rails', 'detector tracks', 'detector rail', 'detector track'] )
+blkdefine(   30, ['cobweb', 'web'] )
+blkdefine(   31, ['tall grass', 'grass'] )
+blkdefine(   32, ['dead shrubs', 'shrubs', 'shrub' ,'dead shrub'] )
+blkdefine(   35, ['white wool', 'wool'] )
+blkdefine(   37, ['yellow flower', 'dandelion'] )
 blkdefine(   38, ['red flower', 'red rose', 'rose'] )
-blkdefine(   40, ['red mushroom'] )
+blkdefine(   39, ['brown mushroom', 'brown shroom'] )
+blkdefine(   40, ['red mushroom', 'red shroom'] )
 blkdefine(   41, ['gold block', 'concentrated vitamin g'] )
 blkdefine(   42, ['iron block', 'concentrated vitamin i'] )
-blkdefine(   43, ['double stone slab', 'double halfstep'] )
+blkdefine(   43, ['double stone slab', 'double halfstep', 'double slab'] )
 blkdefine(   44, ['stone slab', 'halfstep'] )
 blkdefine(   45, ['brick block', 'bricks', 'masonry', 'brick wall'] )
 blkdefine(   46, ['tnt', 'explosives', 'dynamite'] )
-blkdefine(   47, ['bookshelf'] )
+blkdefine(   47, ['bookshelf', 'shelf'] )
 blkdefine(   48, ['mossy cobblestone', 'mossy cobble', 'moss stone', 'mossy stone', 'mossy'] )
 blkdefine(   49, ['obsidian', 'obby'] )
-#blkdefine(   50, ['torch'] )
+blkdefine(   50, ['torch'] )
 blkdefine(   51, ['fire'] )
 blkdefine(   52, ['spawner', 'monster spawner', 'cage'] )
 blkdefine(   53, ['wooden stairs', 'wood stairs', 'wooden staircase', 'wood staircase', 'wooden stair', 'wood stair'] )
@@ -85,13 +118,13 @@ blkdefine(   57, ['diamond block', 'concantrated vitamin d'] )
 blkdefine(   58, ['workbench', 'crafting table'] )
 #blkdefine(   59, ['crops', 'wheat'] )
 #blkdefine(   60, ['tilled soil'] )
-blkdefine(   61, ['furnace', 'forge'] )
+blkdefine(   61, ['furnace', 'forge', 'stove'] )
 #blkdefine(   62, ['lit furnace', 'lit forge'] )
 #blkdefine(   63, ['sign post', 'signpost'] )
 #blkdefine(   64, ['wooden door', 'wood door'] )
-blkdefine(   65, ['ladder'] )
-blkdefine(   66, ['minecart tracks', 'rails', 'tracks', 'rail', 'track', 'minecart track', 'minecart rail', 'minecart rails'] )
-blkdefine(   67, ['cobblestone stairs', 'stone stairs', 'cobblestone staircase', 'stone staircase', 'cobblestone stair', 'stone stair'] )
+#blkdefine(   65, ['ladder'] )
+#blkdefine(   66, ['rails', 'tracks', 'rail', 'track'] )
+blkdefine(   67, ['cobblestone stairs', 'stone stairs', 'cobblestone staircase', 'stone staircase', 'cobblestone stair', 'stone stair', 'cobble stair'] )
 #blkdefine(   68, ['sign'] )
 blkdefine(   69, ['lever', 'switch'] )
 blkdefine(   70, ['stone pressure plate', 'stone plate', 'stone pad', 'stone pressure pad'] )
@@ -99,31 +132,33 @@ blkdefine(   70, ['stone pressure plate', 'stone plate', 'stone pad', 'stone pre
 blkdefine(   72, ['wood pressure plate', 'wood plate', 'wood pad', 'wood pressure pad', 'wooden pressure plate', 'wooden plate', 'wooden pad', 'wooden pressure pad'] )
 blkdefine(   73, ['redstone ore'] )
 blkdefine(   74, ['glowing redstone ore'] )
-#blkdefine(   75, ['redstone torch (off)'] )
-#blkdefine(   76, ['redstone torch (on)'] )
+blkdefine(   75, ['redstone torch (off)'] )
+blkdefine(   76, ['redstone torch (on)'] )
 blkdefine(   77, ['button', 'stone button'] )
 blkdefine(   78, ['snowfall', 'snow', 'fallen snow'] )
-blkdefine(   79, ['ice'] )
+blkdefine(   79, ['ice', 'ice block'] )
 blkdefine(   80, ['snow block'] )
 blkdefine(   81, ['cactus', 'cacti'] )
-blkdefine(   82, ['clay'] )
+blkdefine(   82, ['clay', 'clay block'] )
 #blkdefine(   83, ['sugar cane', 'sugar', 'reeds', 'bamboo', 'shoots'] )
 blkdefine(   84, ['jukebox', 'record player'] )
 blkdefine(   85, ['fence', 'fencing'] )
 blkdefine(   86, ['pumpkin'] )
-blkdefine(   87, ['netherstone', 'netherrack', 'firestone', 'soulstone'] )
-blkdefine(   88, ['soul sand', 'slow sand'] )
-blkdefine(   89, ['glowstone', 'lightstone'] )
+blkdefine(   87, ['netherstone', 'netherrack', 'firestone', 'hellstone', 'bloodstone', 'nether stone', 'hell stone', 'blood stone' ] )
+blkdefine(   88, ['soul sand', 'slow sand', 'soulsand', 'slowsand'] )
+blkdefine(   89, ['glowstone', 'lightstone', 'glow stone', 'light stone'] )
 #blkdefine(   90, ['portal'] )
 blkdefine(   91, ['jack-o-lantern'] )
-#blkdefine(   92, ['cake', 'lie'] )
+#blkdefine(   92, ['cake'] )
+#blkdefine(   93, ['redstone repeater (off)'] )
+#blkdefine(   94, ['redstone repeater (on)'] )
+blkdefine(   96, ['trapdoor', 'hatch'] )
 
 #	items
-blkdefine(  163, ['bed'] )
 blkdefine(  256, ['iron shovel', 'iron spade', 'steel shovel', 'steel spade'] )
 blkdefine(  257, ['iron pick', 'iron pickaxe', 'steel pick', 'steel pickaxe'] )
 blkdefine(  258, ['iron axe', 'steel axe'] )
-blkdefine(  259, ['flint and steel', 'firelighter', 'firestarter'] )
+blkdefine(  259, ['flint and steel', 'firelighter', 'firestarter', 'fire lighter', 'fire starter'] )
 blkdefine(  260, ['apple'] )
 blkdefine(  261, ['bow'] )
 blkdefine(  262, ['arrow'] )
@@ -144,7 +179,7 @@ blkdefine(  276, ['diamond sword'] )
 blkdefine(  277, ['diamond shovel', 'diamond spade'] )
 blkdefine(  278, ['diamond pick', 'diamond pickaxe'] )
 blkdefine(  279, ['diamond axe'] )
-blkdefine(  280, ['stick'] )
+blkdefine(  280, ['stick', 'sticks'] )
 blkdefine(  281, ['bowl', 'wood bowl', 'wooden bowl'] )
 blkdefine(  282, ['soup', 'mushroom soup'] )
 blkdefine(  283, ['golden sword', 'gold sword'] )
@@ -183,13 +218,13 @@ blkdefine(  315, ['golden breastplate', 'golden chest piece', 'golden armor', 'g
 blkdefine(  316, ['golden greaves', 'golden leggings', 'golden pants', 'gold greaves', 'gold leggings', 'gold pants'] )
 blkdefine(  317, ['golden boots', 'gold boots'] )
 blkdefine(  318, ['flint', 'flint stone', 'fred', 'wilma', 'pebbles'] )
-blkdefine(  319, ['raw pork', 'pork belly', 'uncooked pork'] )
-blkdefine(  320, ['bacon', 'pork chop', 'cooked pork'] )
+blkdefine(  319, ['raw pork', 'pork belly', 'uncooked pork', 'raw porkchop'] )
+blkdefine(  320, ['bacon', 'pork chop', 'cooked pork', 'cooked porkchop', 'cooked pork chop'] )
 blkdefine(  321, ['painting', 'canvas', 'art', 'artwork'] )
-blkdefine(  322, ['golden apple'] )
+blkdefine(  322, ['golden apple', 'gold apple'] )
 blkdefine(  323, ['sign'] )
 blkdefine(  324, ['wooden door', 'wood door'] )
-blkdefine(  325, ['bucket', 'iron bucket', 'steel bucket'] )
+blkdefine(  325, ['bucket', 'iron bucket', 'steel bucket', 'empty bucket'] )
 blkdefine(  326, ['bucket of water', 'water bucket'] )
 blkdefine(  327, ['bucket of magma', 'magma bucket', 'bucket of lava', 'lava bucket', 'hot sauce'] )
 blkdefine(  328, ['minecart', 'cart'] )
@@ -201,11 +236,11 @@ blkdefine(  333, ['boat'] )
 blkdefine(  334, ['leather'] )
 blkdefine(  335, ['milk', 'bucket of milk', 'milk bucket'] )
 blkdefine(  336, ['clay brick', 'brick'] )
-blkdefine(  337, ['clay ball', 'clay lump', 'lump of clay'] )
+blkdefine(  337, ['clay ball', 'clay lump', 'lump of clay', 'ball of clay'] )
 blkdefine(  338, ['sugar cane', 'reeds', 'bamboo', 'shoots'] )
 blkdefine(  339, ['paper', 'page', 'sheet of paper'] )
 blkdefine(  340, ['book', 'tome', 'volume'] )
-blkdefine(  341, ['slimeball', 'slime ball', 'ball of slime'] )
+blkdefine(  341, ['slimeball', 'slime ball', 'ball of slime', 'slime'] )
 blkdefine(  342, ['storage minecart', 'storage cart'] )
 blkdefine(  343, ['powered minecart', 'powered cart'] )
 blkdefine(  344, ['egg', 'ovum'] )
@@ -215,10 +250,14 @@ blkdefine(  347, ['watch', 'clock', 'timepiece'] )
 blkdefine(  348, ['lightstone dust', 'glowstone dust'] )
 blkdefine(  349, ['raw fish', 'sushi'] )
 blkdefine(  350, ['cooked fish'] )
-blkdefine(  351, ['ink sac', 'ink sack', 'dye'] )
-blkdefine(  352, ['bone'] )
-blkdefine(  353, ['sugar'] )
-blkdefine(  354, ['cake', 'lie'] )
+blkdefine(  351, ['ink sac', 'ink sack', 'dye', 'black dye'] )
+blkdefine(  352, ['bone', 'bones'] )
+blkdefine(  353, ['sugar', 'lump of sugar'] )
+blkdefine(  354, ['cake'] )
+blkdefine(  355, ['bed', 'mattress'] )
+blkdefine(  356, ['redstone repeater', 'repeater'] )
+blkdefine(  357, ['cookie'] )
+blkdefine(  358, ['map'] )
 blkdefine( 2256, ['gold record'] )
 blkdefine( 2257, ['green record'] )
 
