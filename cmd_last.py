@@ -23,7 +23,7 @@ class who_listener(object):
 		if len(text):
 			self.reply.say( '[*] Currently playing: ' + ', '.join( text ) )
 		else:
-			self.reply.say( '[*] Nobody is currently playing' )
+			self.reply.say( '[*] No players currently online' )
 
 
 class last_listener(object):
@@ -39,38 +39,46 @@ class last_listener(object):
 		past = ""	# Textual description of the time interval represented by "seconds" var
 		limit = 0	# Max number of players for "?last <N>" or the default for "?last"
 		search = ""	# Player name search string for "?last <name>"
-		
-		args = " ".join( self.args ).strip()
-		match = re.match(r"(\d+)\s*([a-z]+)", args.lower())
-		if args.isdigit():
-			limit = int(args)
-			if limit == 0:
-				self.reply.say( '[!] Player count cannot be zero' )
-				return
-		elif match:
-			number, units = match.group(1, 2)
-			number = int(number)
-			if number == 0:
-				self.reply.say( '[!] Time interval cannot be zero' )
-				return
-			if "seconds".startswith(units):
-				seconds = number
-				past = "second" if number == 1 else "%d seconds" % number
-			elif "minutes".startswith(units):
-				seconds = number * 60 + 59
-				past = "minute" if number == 1 else "%d minutes" % number
-			elif "hours".startswith(units):
-				seconds = number * 3600 + 3599
-				past = "hour" if number == 1 else "%d hours" % number
-			elif "days".startswith(units):
-				seconds = number * 86400 + 86399
-				past = "day" if number == 1 else "%d days"% number
+
+		for arg in self.args:
+			match = re.match( r"(\d+)(\D+)", arg.lower() )
+
+			if arg.isdigit():
+				limit = int(arg)
+				if limit == 0:
+					self.reply.say( '[!] Player count cannot be zero' )
+					return
+			elif match:
+				number, units = match.group(1, 2)
+				number = int(number)
+				if number == 0:
+					self.reply.say( '[!] Time interval cannot be zero' )
+					return
+				if "seconds".startswith(units):
+					seconds = number
+					past = "second" if number == 1 else "%d seconds" % number
+				elif "minutes".startswith(units):
+					seconds = number * 60 + 59
+					past = "minute" if number == 1 else "%d minutes" % number
+				elif "hours".startswith(units):
+					seconds = number * 3600 + 3599
+					past = "hour" if number == 1 else "%d hours" % number
+				elif "days".startswith(units):
+					seconds = number * 86400 + 86399
+					past = "day" if number == 1 else "%d days" % number
+				elif "weeks".startswith(units):
+					seconds = number * 7 * 86400 + 86399
+					past = "week" if number == 1 else "%d weeks" % number
+				elif "years".startswith(units):
+					seconds = int( round( number * 365.25 * 86400 + 86399 ) )
+					past = "year" if number == 1 else "%d years" % number
+				else:
+					self.reply.say( '[!] Unrecognized time unit "%s"' % units )
+					return
 			else:
-				self.reply.say( '[!] Unrecognized time unit "%s"' % units )
-				return
-		elif args:
-			search = args
-		else:
+				search = arg
+
+		if not seconds and not limit and not search:
 			limit = default_num_last
 
 		online_matches = search_players( players, search )
@@ -81,27 +89,30 @@ class last_listener(object):
 		if limit:
 			all_players = all_players[ :limit ]
 		count = len(all_players)
-		player = "player" if count == 1 else "players"
 
-		if search:
-			if count:
-				text = '[*] Last %s named "%s": ' % ( player, search )
+		if count:
+			text = '[*] Last'
+			if limit == 1:
+				text += ' 1 player'
+			elif limit:
+				text += ' %d players' % limit
+			elif count == 1:
+				text += ' player'
 			else:
-				text = '[*] No players named "%s" were found' % search
-		elif seconds:
-			if count:
-				text = '[*] Last %s in the past %s: ' % ( player, past )
-			else:
-				text = '[*] Nobody has played in the past %s' % past
+				text += ' players'
 		else:
-			if count:
-				if limit > 1:
-					text = '[*] Last %d players: ' % limit
-				else:
-					text = '[*] Last 1 player: '
-			else:
-				text = '[*] No players found on server'
-		
+			text = '[*] No players'
+
+		if seconds:
+			text += ' in the past %s' % past
+		if search:
+			text += ' named "%s"' % search
+
+		if count:
+			text += ': '
+		else:
+			text += ' were found'
+
 		self.reply.say( text + ', '.join( all_players ) )
 
 
@@ -149,9 +160,6 @@ def search_players( file_names, player ):
 		if player in x.lower().replace( ".dat", "" ):
 			results.append( x )
 	return results
-	#lookup_list = [ ( x.lower().replace( ".dat", "" ), x ) for x in file_names ]	
-	#player = player.lower()
-	#return [ y for x, y in lookup_list if player in x ]
 
 def format_players( file_names, max_interval, **format_time_args ):
 	file_times = [ os.stat( profile_dir + os.sep + x ).st_mtime for x in file_names ]
