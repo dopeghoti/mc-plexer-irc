@@ -1,14 +1,15 @@
 #!/usr/bin/python
 # coding=UTF-8
 import os
+import re
 import sys
 import time
 
 # Directory with player profiles
 profile_dir = '/home/minecraft/loafy/players'
 
-# How many players to show if no player name was given to query_last()
-query_last_num = 5
+# Default number of players returned by ?last command if no arguments were given
+default_num_last = 5
 
 
 class who_listener(object):
@@ -16,12 +17,106 @@ class who_listener(object):
 		self.reply = reply
 
 	def notify_players( self, players ):
-		self.reply.say( '[*] Currently playing: ' + ' '.join( players ) )
+		file_names = [ x + ".dat" for x in players ]
+		text = format_players( file_names, 0, predate = "since ", pretime = "for " )
+
+		if len(text):
+			self.reply.say( '[*] Currently playing: ' + ', '.join( text ) )
+		else:
+			self.reply.say( '[*] No players currently online' )
 
 
-def format_time( file_time ):
-	seconds = int( time.time() - file_time )
+class last_listener(object):
+	def __init__( self, reply, args ):
+		self.reply = reply
+		self.args = args
 
+	def notify_players( self, players ):
+		players = set( x + ".dat" for x in players )
+		files_orig_case = [ x for x in os.listdir( profile_dir ) if x.endswith(".dat") and x not in players ]
+
+		seconds = 0	# Time limit for "?last <N> s[econds]|m[inutes]|h[ours]|d[ays]" in seconds
+		past = ""	# Textual description of the time interval represented by "seconds" var
+		limit = 0	# Max number of players for "?last <N>" or the default for "?last"
+		search = ""	# Player name search string for "?last <name>"
+
+		for arg in self.args:
+			match = re.match( r"(\d+)(\D+)", arg.lower() )
+
+			if arg.isdigit():
+				limit = int(arg)
+				if limit == 0:
+					self.reply.say( '[!] Player count cannot be zero' )
+					return
+			elif match:
+				number, units = match.group(1, 2)
+				number = int(number)
+				if number == 0:
+					self.reply.say( '[!] Time interval cannot be zero' )
+					return
+				if "seconds".startswith(units):
+					seconds = number
+					past = "second" if number == 1 else "%d seconds" % number
+				elif "minutes".startswith(units):
+					seconds = number * 60 + 59
+					past = "minute" if number == 1 else "%d minutes" % number
+				elif "hours".startswith(units):
+					seconds = number * 3600 + 3599
+					past = "hour" if number == 1 else "%d hours" % number
+				elif "days".startswith(units):
+					seconds = number * 86400 + 86399
+					past = "day" if number == 1 else "%d days" % number
+				elif "weeks".startswith(units):
+					seconds = number * 7 * 86400 + 86399
+					past = "week" if number == 1 else "%d weeks" % number
+				elif "years".startswith(units):
+					seconds = int( round( number * 365.25 * 86400 + 86399 ) )
+					past = "year" if number == 1 else "%d years" % number
+				else:
+					self.reply.say( '[!] Unrecognized time unit "%s"' % units )
+					return
+			else:
+				search = arg
+
+		if not seconds and not limit and not search:
+			limit = default_num_last
+
+		online_matches = search_players( players, search )
+		offline_matches = search_players( files_orig_case, search )
+		online_players = [ x.replace( ".dat", "" ) + " (online)" for x in online_matches ]
+		offline_players = format_players( offline_matches, seconds, posttime = " ago" )
+		all_players = online_players + offline_players
+		if limit:
+			all_players = all_players[ :limit ]
+		count = len(all_players)
+
+		if count:
+			text = '[*] Last'
+			if limit == 1:
+				text += ' 1 player'
+			elif limit:
+				text += ' %d players' % limit
+			elif count == 1:
+				text += ' player'
+			else:
+				text += ' players'
+		else:
+			text = '[*] No players'
+
+		if seconds:
+			text += ' in the past %s' % past
+		if search:
+			text += ' named "%s"' % search
+
+		if count:
+			text += ': '
+		else:
+			text += ' were found'
+
+		self.reply.say( text + ', '.join( all_players ) )
+
+
+def format_time( file_time, seconds, pretime = "", posttime = "", predate = "", postdate = "" ):
 	if seconds < 0:
 		return "[bad timestamp]"
 
@@ -34,67 +129,56 @@ def format_time( file_time ):
 	hours %= 24
 
 	if days >= 365:
-		return time.strftime( "%b %d, %Y", time.localtime( file_time ) )
+		text = time.strftime( "%b %d, %Y", time.localtime( file_time ) )
+		return predate + text + postdate		
 	elif days > 30:
-		return time.strftime( "%b %d", time.localtime( file_time ) )
+		text = time.strftime( "%b %d", time.localtime( file_time ) )
+		return predate + text + postdate
 	elif days > 1:
-		return "%d days ago" % days
+		return pretime + "%d days" % days + posttime
 	elif days == 1:
-		return "1 day ago"
+		return pretime + "1 day" + posttime
 	elif hours > 1:
-		return "%d hours ago" % hours
+		return pretime + "%d hours" % hours + posttime
 	elif hours == 1:
-		return "1 hour ago"
+		return pretime + "1 hour" + posttime
 	elif minutes > 1:
-		return "%d mins ago" % minutes
+		return pretime + "%d mins" % minutes + posttime
 	elif minutes == 1:
-		return "1 min ago"
+		return pretime + "1 min" + posttime
 	elif seconds > 1:
-		return "%d secs ago" % seconds
+		return pretime + "%d secs" % seconds + posttime
 	elif seconds == 1:
-		return "1 sec ago"
+		return pretime + "1 sec" + posttime
 	else:
-		return "now"
+		return pretime + "less than 1 sec" + posttime
 
+def search_players( file_names, player ):
+	player = player.lower()
+	results = []
+	for x in file_names:
+		if player in x.lower().replace( ".dat", "" ):
+			results.append( x )
+	return results
 
-def query_last( reply, args ):
-	files_orig_case = [ x for x in os.listdir( profile_dir ) if x.endswith(".dat") ]
+def format_players( file_names, max_interval, **format_time_args ):
+	file_times = [ os.stat( profile_dir + os.sep + x ).st_mtime for x in file_names ]
 
-	if len(args):
-		player = args[0]
-	
-		files_lower_case = [ x.lower() for x in files_orig_case ]
-		player_lower_file = player.lower() + ".dat"
+	results = zip( file_times, file_names )
+	results.sort()
+	results.reverse()
 
-		if player_lower_file in files_lower_case:
-			index = files_lower_case.index( player_lower_file )
-			file_name = files_orig_case[ index ]
-			file_path = profile_dir + os.sep + file_name
+	text = []
+	now = time.time()
+	for file_time, file_name in results:
+		interval = int( now - file_time )
+		if max_interval and interval > max_interval:
+			break
+		player = file_name.replace( ".dat", "" )
+		ago_time = format_time( file_time, interval, **format_time_args )
+		text.append( "%s (%s)" % ( player, ago_time ) )
 
-			file_time = os.stat( file_path ).st_mtime
-			ago_time = format_time( file_time )
-			player_proper_name = file_name.replace( ".dat", "" )
-
-			reply.say( "Player %s last seen %s." % ( player_proper_name, ago_time ) )
-		else:
-			reply.say( "Player %s not found on server." % player )
-
-	else:
-		file_times = [ os.stat( profile_dir + os.sep + x ).st_mtime for x in files_orig_case ]
-
-		results = zip( file_times, files_orig_case )
-		results.sort()
-		results.reverse()
-		results = results[ :query_last_num ]
-
-		text = []
-		for file_time, file_name in results:
-			player = file_name.replace( ".dat", "" )
-			ago_time = format_time( file_time )
-			text.append( "%s (%s)" % ( player, ago_time ) )
-
-		count = len( text )
-		reply.say( "Last %d players: %s" % ( count, ", ".join( text ) ) )
+	return text
 
 
 def notify_login( player ):

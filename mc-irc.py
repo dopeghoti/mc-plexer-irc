@@ -86,7 +86,8 @@ class cmd_dispatcher:
 		elif keyword in ['?WTF', '?TIME']:
 			reply.say( '[*] Not yet implemented, ' + talker )
 		elif keyword in ['?LAST']:
-			cmd_last.query_last( reply, args )
+			# Note: list(args) makes a shallow copy in case caller changes args later
+			self.request_players( cmd_last.last_listener( reply, list(args) ) )
 		elif keyword in ['?SERVER', '?MINECRAFT']:
 			reply.say( '[*] The minecraft server can be found at ghoti.dyndns.org.' )
 			reply.say( '[*] For more information, say "#link 673" in channel.' )
