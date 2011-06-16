@@ -199,7 +199,7 @@ class Mineremote:
   
                         self.log_server(line)
   
-                        for i in self.clients:
+                        for i in self.clients.keys():
                             if self.clients[i]['auth']:
                                 if self.send_peer(i, line) == 0:
                                     self.client_log(i, 'Looks dead, removing')
