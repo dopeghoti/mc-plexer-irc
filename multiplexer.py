@@ -96,6 +96,9 @@ class Mineremote:
             if peer in self.outputs:
                 self.outputs.remove(peer)
 
+            if peer in self.buffers:
+                del self.buffers[peer]
+
             peer.close()
 
             self.log('Connection count: %d' % len(self.clients))
@@ -104,6 +107,7 @@ class Mineremote:
 
     def mainloop(self):
         self.clients = dict({})
+        self.buffers = dict({})
 
         while True:
             try:
@@ -145,6 +149,7 @@ class Mineremote:
                               'auth': auth,
                               'connected': int(time.time())
                         }
+                        self.buffers[client] = ''
                         
                         self.client_log(client, 'Connected')
                         self.log('Connection count: %d' % len(self.clients))
@@ -156,15 +161,21 @@ class Mineremote:
    
                             if buf == '':
                                 # buffer is empty, client died!
+                                lines = []
                                 self.client_log(s, 'Client died')
                                 self.clear_peer(s)
                             else:
+                                lines = (self.buffers[s] + buf).split('\n')
+                                self.buffers[s] = lines.pop()
+
+                            for buf in lines:
                                 if not self.clients[s]['auth']:
                                     if buf.rstrip() != self.password:
                                         self.send_peer(s,
                                             '- Bad password, sorry >:O')
                                         self.client_log(s, 'Bad password')
                                         self.clear_peer(s)
+                                        break
 
                                     else:
                                         self.clients[s]['auth'] = True
