@@ -84,9 +84,8 @@ class multiplexer_connection:
 			text = text[tosend:]
 			tosend -= self.socket.send( text )
 
-	def say( self, text ):
+	def say( self, text, cmd = 'say', maxlen = 99, surline = '[^]' ):
 		line = ''
-		surline = '§8[^]§a '
 		writeline = False
 		#	Find "words" that are too long, and redact them.
 		wordlist = [ word if len( word ) < 85 else word[:4] + '§8[...]§a' + word[-4:] for word in text.split() ]
@@ -113,8 +112,8 @@ class multiplexer_connection:
 
 		while wordlist:
 			curr_word = wordlist.pop( 0 )
-			if not curr_word or len( line ) + len( curr_word ) > 100:
-				self.cmd( 'say ' + line )
+			if not curr_word or len( line ) + len( curr_word ) > maxlen:
+				self.cmd( cmd + ' ' + line )
 				line = surline
 			if curr_word:
 				line = line + ' ' + curr_word
@@ -162,9 +161,6 @@ class multiplexer_connection:
 								keyword = chatter.split(' ')[0].upper()
 								args = chatter.split(' ')[1:]
 								self.dispatcher.notify_cmd( self, talker, keyword, args )
-							elif chatter[0] == "/":
-								#	Someone issued a command to the server. Do nothing.
-								pass
 							elif len(chatter) > 5 and ( chatter.upper()[-5:] == '> IRC' or chatter.upper()[-4:] == '>IRC' ):
 								# Someone is talking to IRC, old-school.
 								chatter = chatter[:-3]
@@ -175,13 +171,17 @@ class multiplexer_connection:
 									#	chatter = chatter[:-3]
 									self.outbox.append( '14<9' + talker + '14> 11' + chatter )
 
-					elif  eparts[3][0] == "*":
+					elif eparts[3][0] == "*":
 						#	Someone is acting
 						#	self.outbox.append (' action stub ' ) 
                                                 talker  = eparts[4]       # strip the leading and trailing brackets
 						chatter = ' '.join(eparts[5:])
 						self.outbox.append( ' 11* 9' + talker + ' 11' + chatter )
-
+					elif ' '.join(eparts[4:7]) == 'issued server command:' and len(eparts) > 7:
+						talker = eparts[3]
+						keyword = '?' + eparts[7].upper()
+						args = eparts[8:]
+						self.dispatcher.notify_cmd( private_reply( self, talker ), talker, keyword, args )
 					elif ' '.join(eparts[3:5]) == 'Connected players:':
 						self.dispatcher.notify_players( eparts[5:] )
 					elif ' '.join(eparts[5:7]) == 'logged in':
@@ -228,3 +228,15 @@ def testloop():
 	#	mc_conn.disconnect()
 
 #	testloop()
+
+
+# Wrapper class around multiplexer_connection.say() to send a private /TELL response to commands issued
+# privately in game with a / instead of a ?
+class private_reply(object):
+	def __init__( self, mp, talker ):
+		self.mp = mp
+		self.talker = talker
+		
+	def say( self, text ):
+		# maxlen: 100 - "CONSOLE whispers " = 83
+		self.mp.say( text, cmd = 'tell ' + self.talker, maxlen = 83 )
