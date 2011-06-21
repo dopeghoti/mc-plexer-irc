@@ -106,7 +106,7 @@ class last_listener(object):
 		if seconds:
 			text += ' in the past %s' % past
 		if search:
-			text += ' named "%s"' % search
+			text += ' matching "%s"' % search
 
 		if count:
 			text += ': '
