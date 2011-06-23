@@ -41,7 +41,7 @@ def query_time( reply ):
 
 	index = bisect.bisect( names, ( time, ) )
 	name = random.choice( names[index - 1][1] )
-	text = "Tis " + name + " in Loafyland, with "
+	text = "[*] 'Tis " + name + " in Loafyland, with "
 
 	if rain:
 		if thunder:
