@@ -12,6 +12,7 @@ import mp_class
 
 import cmd_last
 import mc_blocks
+import cmd_time
 
 # TODO: External configuration files
 
@@ -54,7 +55,7 @@ class cmd_dispatcher:
 		cmd_last.notify_login( player )
 
 	def notify_cmd( self, reply, talker, keyword, args ):
-		botcmds = ['?ID', '?WHO', '?LOAD', '?MAP', '?MUMBLE', '?LAST', '?SERVER', '!REHASH']
+		botcmds = ['?ID', '?WHO', '?LOAD', '?MAP', '?MUMBLE', '?LAST', '?SERVER', '?TIME', '!REHASH']
 		if keyword in ["?HELP"]:
 			reply.say( '[*] Available commands:' )
 			reply.say( '[*] ' + ' '.join(botcmds) )
@@ -83,8 +84,8 @@ class cmd_dispatcher:
 				#	No idea what the user would be asking for. Help em.
 				mapurl = 'Usage: ' + keyword + ' X [Y] Z'
 			reply.say( mapurl )
-		elif keyword in ['?WTF', '?TIME']:
-			reply.say( '[*] Not yet implemented, ' + talker )
+		elif keyword in ['?TIME']:
+			cmd_time.query_time( reply )
 		elif keyword in ['?LAST']:
 			# Note: list(args) makes a shallow copy in case caller changes args later
 			self.request_players( cmd_last.last_listener( reply, list(args) ) )
