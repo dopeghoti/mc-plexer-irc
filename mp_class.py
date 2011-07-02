@@ -182,6 +182,11 @@ class multiplexer_connection:
 						keyword = '?' + eparts[7].upper()
 						args = eparts[8:]
 						self.dispatcher.notify_cmd( private_reply( self, talker ), talker, keyword, args )
+					elif ' '.join(eparts[4:6]) == 'tried command:' and len(eparts) > 6:
+						talker = eparts[3]
+						keyword = '?' + eparts[6].upper()
+						args = eparts[7:]
+						self.dispatcher.notify_cmd( private_reply( self, talker ), talker, keyword, args )
 					elif ' '.join(eparts[3:5]) == 'Connected players:':
 						self.dispatcher.notify_players( eparts[5:] )
 					elif ' '.join(eparts[5:7]) == 'logged in':
