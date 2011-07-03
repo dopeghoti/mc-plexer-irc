@@ -7,6 +7,7 @@ import string
 import select
 import mc_blocks
 import cmd_last
+import re
 
 # Multiplexer configuration settings
 mc_socket = '/home/minecraft/tmp/plexer.sock'
@@ -188,7 +189,9 @@ class multiplexer_connection:
 						args = eparts[7:]
 						self.dispatcher.notify_cmd( private_reply( self, talker ), talker, keyword, args )
 					elif ' '.join(eparts[3:5]) == 'Connected players:':
-						self.dispatcher.notify_players( eparts[5:] )
+						r = re.compile( ",$" )
+						players = [ r.sub( "", x ) for x in eparts[5:] ]
+						self.dispatcher.notify_players( players )
 					elif ' '.join(eparts[5:7]) == 'logged in':
 						self.dispatcher.notify_login( eparts[3] )
 			self.events = []
