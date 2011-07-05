@@ -6,6 +6,7 @@ import time
 import sys
 import string
 import select
+import traceback
 
 import irc_class
 import mp_class
@@ -31,6 +32,21 @@ mc_password = 'aardvark'
 
 sock_list = []
 
+# Context manager to catch unhandled exceptions and report error message to sender
+class exc_manager:
+	def __init__( self, reply = None ):
+		self.reply = reply
+		
+	def __enter__( self ):
+		pass
+		
+	def __exit__( self, exc_type, exc_val, exc_tb ):
+		if exc_type:
+			traceback.print_exception( exc_type, exc_val, exc_tb )
+			if self.reply:
+				text = traceback.format_exception_only( exc_type, exc_val )
+				self.reply.say( '[!] ' + text[-1] )
+		return True
 
 # Common dispatcher class for commands from in game and from IRC
 class cmd_dispatcher:
@@ -48,13 +64,19 @@ class cmd_dispatcher:
 		if len(self.online_player_listeners):
 			listener = self.online_player_listeners[0]
 			del self.online_player_listeners[0]
-			listener.notify_players( players )
+			with exc_manager( listener.reply ):
+				listener.notify_players( players )
 
 	def notify_login( self, player ):
 		# Touch profile timestamp to record login time for ?who
-		cmd_last.notify_login( player )
+		with exc_manager():
+			cmd_last.notify_login( player )
 
 	def notify_cmd( self, reply, talker, keyword, args ):
+		with exc_manager( reply ):
+			self.__notify_cmd( reply, talker, keyword, args )
+
+	def __notify_cmd( self, reply, talker, keyword, args ):
 		botcmds = ['?ID', '?WHO', '?LOAD', '?MAP', '?MUMBLE', '?LAST', '?SERVER', '?TIME', '!REHASH']
 		if keyword in ["?HELP"]:
 			reply.say( '[*] Available commands:' )
