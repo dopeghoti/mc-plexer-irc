@@ -13,6 +13,9 @@ import re
 mc_socket = '/home/minecraft/tmp/plexer.sock'
 from mc_private import *
 
+# Characters recognized as a command prefix in Minecraft (not including '/' for private cmds)
+CMD_PREFIX = [ '?', '!' ]
+
 class multiplexer_connection:
 	outbox = []
 	socket = socket.socket( socket.AF_UNIX, socket.SOCK_STREAM )
@@ -139,26 +142,8 @@ class multiplexer_connection:
 						talker  = eparts[3][1:-1]	# strip the leading and trailing brackets
 						chatter = ' '.join(eparts[4:])
 						if chatter:
-
-
-							if len(chatter) > 2 and chatter[:2] == '??':
-								# Someone's asking what something is.
-								query = ''.join( chatter[2:] )
-								mc_blocks.lookup(self, query)
-
-#							elif len(chatter) > 4 and chatter[:4].upper() in ( '?map', '?gps' ):
-#								coords = ''.join( chatter[4:] ).split( ' ' )
-#								if len( coords ) == 2: 
-#									self.cmd( 'say [*] Not fully implemented (2 arg)' )
-#									self.cmd( 'say [*] Args: ' + ' '.join( coords ) )
-#								elif len( coords ) == 3:		
-#									self.cmd( 'say [*] Not fully implemented (3 arg)' )
-#									self.cmd( 'say [*] Args: ' + ' '.join( coords ) )
-#								else:
-#									self.cmd( 'say [*] Usage: ?map X [Y] Z' )
-
-							elif chatter[0] in ["?", "!"]:
-								# It's a command for the bot!
+							# Bot Commands begin with one and only one prefix character
+							if chatter[0:1] in CMD_PREFIX and not chatter[1:2] in CMD_PREFIX:
 								keyword = chatter.split(' ')[0].upper()
 								args = chatter.split(' ')[1:]
 								self.dispatcher.notify_cmd( self, talker, keyword, args )
