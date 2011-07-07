@@ -119,7 +119,10 @@ class IRC:
 				if sdata[2] == self.channel:
 					self.dispatcher.notify_cmd( self, nick, keyword, args )
 				else:
-					self.dispatcher.notify_cmd( private_reply( self, nick ), nick, keyword, args )
+					if keyword[0:1] == '?':
+						self.dispatcher.notify_cmd( private_reply( self, nick ), nick, keyword, args )
+					else:
+						self.send( 'PRIVMSG ' + nick + ' :[!] Only ? commands allowed here. Try using command in channel.' )
 
 			# Chat text in channel. Forward to Minecraft server
 			elif sdata[2] == self.channel:
