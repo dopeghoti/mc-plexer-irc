@@ -4,7 +4,9 @@ import time
 import sys
 import string
 import select
-import cmd_last
+
+# Characters recognized as a command prefix in IRC
+CMD_PREFIX = [ '?', '!' ]
 
 # Define our IRC Class
 class IRC:
@@ -101,29 +103,31 @@ class IRC:
 			#	IRC > :DopeGhoti!~ghoti@ip98-177-177-13.ph.ph.cox.net PRIVMSG ###linkulator :Ignore this message
 			#	therefore,
 			#	userhost = sdata[0]
-			#	nick = userhost.lstrip( ':' ).split( '!' )[0]
+			#	nick = userhost.replace( ':', '', 1 ).split( '!' )[0]
 
 			#	Per above, pick out the nick
 			userhost = sdata[0]
-			nick = userhost.lstrip( ':' ).split( '!' )[0]
+			nick = userhost.replace( ':', '', 1 ).split( '!' )[0]
 
 			#	At this point, we know the message is to us or the channel we're in.  
 			#	Look for special cases, and forward everything else to the outbox.
 
-			#	In-IRC Bot Commands:
-			#	TODO: check for length >= 2; command keywords
-			if sdata[3].lstrip( ':' )[:1] in ['?','!']:
-				keyword = sdata[3].lstrip( ':' ).upper()
+			#	In-IRC Bot Commands begin with one and only one prefix character
+			keyword = sdata[3].replace( ':', '', 1 ).upper()
+			if keyword[0:1] in CMD_PREFIX and not keyword[1:2] in CMD_PREFIX:
 				args = sdata[4:]
 				if sdata[2] == self.channel:
 					self.dispatcher.notify_cmd( self, nick, keyword, args )
 				else:
-					self.dispatcher.notify_cmd( private_reply( self, nick ), nick, keyword, args )					
+					if keyword[0:1] == '?':
+						self.dispatcher.notify_cmd( private_reply( self, nick ), nick, keyword, args )
+					else:
+						self.send( 'PRIVMSG ' + nick + ' :[!] Only ? commands allowed here. Try using command in channel.' )
 
 			# Chat text in channel. Forward to Minecraft server
 			elif sdata[2] == self.channel:
 				temp_outbox = ' '.join( sdata[3:] )
-				temp_outbox = temp_outbox.lstrip( ':' )		#	Colonectomy
+				temp_outbox = temp_outbox.replace( ':', '', 1 )		#	Colonectomy
 				temp_outbox = '§8[#] §7<§b' + nick + '§7>§a ' + temp_outbox
 				self.outbox.append( temp_outbox )
 			
@@ -134,7 +138,7 @@ class IRC:
 			#	Someone changed the topic
 			#	:Nick!ident@host.example.com TOPIC ##loafyland :Mary had a little lamb
 			#	\__________[0]_____________/ \[1]/ \___[2]___/ \_______[3:]__________/
-			temp_outbox = ' '.join( sdata[3:] ).lstrip( ':' )
+			temp_outbox = ' '.join( sdata[3:] ).replace( ':', '', 1 )
 			temp_outbox = '§8[#] New IRC channel topic:§b ' + temp_outbox
 			self.outbox.append( temp_outbox )
 		return( self.data )
