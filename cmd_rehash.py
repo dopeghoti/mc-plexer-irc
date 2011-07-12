@@ -63,7 +63,11 @@ def do_rehash( reply, name ):
 			if getattr(obj, "__class__", None) in old_classes:
 				name = obj.__class__.__name__
 				if name in new_classes and not name in dup_classes:
-					obj.__class__ = new_classes[ name ]
+					try:
+						obj.__class__ = new_classes[ name ]
+					except:
+						traceback.print_exc()
+						err_classes.add( name )
 				else:
 					err_classes.add( name )
 					if name in dup_classes:
