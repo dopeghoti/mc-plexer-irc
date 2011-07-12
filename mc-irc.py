@@ -14,6 +14,7 @@ import mp_class
 import cmd_last
 import mc_blocks
 import cmd_time
+import cmd_rehash
 
 # TODO: External configuration files
 
@@ -115,9 +116,15 @@ class cmd_dispatcher:
 			reply.say( '[*] The minecraft server can be found at ghoti.dyndns.org.' )
 			reply.say( '[*] For more information, say "#link 673" in channel.' )
 		elif keyword in ['!REHASH']:
-			global irc_conn
-			reply.say( '[*] Rehashing.' )
-			irc_conn.disconnect( 'Asked to rehash' )
+			if args:
+				for name in args:
+					with exc_manager( reply ):
+						reply.say( '[*] Rehashing module "%s"' % name )
+						cmd_rehash.do_rehash( reply, name )
+			else:
+				global irc_conn
+				reply.say( '[*] Rehashing everything.' )
+				irc_conn.disconnect( 'Asked to rehash' )
 
 
 dispatcher = cmd_dispatcher()
