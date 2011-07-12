@@ -6,15 +6,11 @@ import time
 import sys
 import string
 import select
-import traceback
 
 import irc_class
 import mp_class
 
-import cmd_last
-import mc_blocks
-import cmd_time
-import cmd_rehash
+import mc_dispatcher
 
 # TODO: External configuration files
 
@@ -33,101 +29,7 @@ mc_password = 'aardvark'
 
 sock_list = []
 
-# Context manager to catch unhandled exceptions and report error message to sender
-class exc_manager:
-	def __init__( self, reply = None ):
-		self.reply = reply
-		
-	def __enter__( self ):
-		pass
-		
-	def __exit__( self, exc_type, exc_val, exc_tb ):
-		if exc_type:
-			traceback.print_exception( exc_type, exc_val, exc_tb )
-			if self.reply:
-				text = traceback.format_exception_only( exc_type, exc_val )
-				self.reply.say( '[!] ' + text[-1] )
-		return True
-
-# Common dispatcher class for commands from in game and from IRC
-class cmd_dispatcher:
-	def __init__( self ):
-		self.online_player_listeners = []
-
-	def request_players( self, listener ):
-		# Called by bot commands to register a listener for output of server "list" command
-		global mc_conn
-		self.online_player_listeners.append( listener )
-		mc_conn.cmd('list')
-
-	def notify_players( self, players ):
-		# Someone asked who's playing. Relay it to one of the listening objects
-		if len(self.online_player_listeners):
-			listener = self.online_player_listeners[0]
-			del self.online_player_listeners[0]
-			with exc_manager( listener.reply ):
-				listener.notify_players( players )
-
-	def notify_login( self, player ):
-		# Touch profile timestamp to record login time for ?who
-		with exc_manager():
-			cmd_last.notify_login( player )
-
-	def notify_cmd( self, reply, talker, keyword, args ):
-		with exc_manager( reply ):
-			self.__notify_cmd( reply, talker, keyword, args )
-
-	def __notify_cmd( self, reply, talker, keyword, args ):
-		botcmds = ['?ID', '?WHO', '?LOAD', '?MAP', '?MUMBLE', '?LAST', '?SERVER', '?TIME', '!REHASH']
-		if keyword in ["?HELP"]:
-			reply.say( '[*] Available commands:' )
-			reply.say( '[*] ' + ' '.join(botcmds) )
-		elif keyword in ['?ID']:
-			mc_blocks.lookup( reply, " ".join( args ) )
-		elif keyword in ['?WHO', '?W', '?PLAYERS']:
-			self.request_players( cmd_last.who_listener( reply ) )
-		elif keyword in ['?MUMBLE']:
-			reply.say( '[*] Mumble server at wold.its.lsu.edu' )
-			reply.say( '[*] Contact DopeGhoti, Thvortex, or Sunfall (Phil_Bordelon) for password.')
-		elif keyword in ['?LOAD']:
-			u = open( '/proc/loadavg', 'r' )
-			l = u.readline().split()[0]
-			u.close()
-			reply.say( '[*] Current system load is ' + l )
-		elif keyword in ['?MAP', '?GPS', '?SHOW']:
-			if len( args ) == 2:
-				#	We need to present a Y coordinate.  Assume ground-level
-				mapurl = 'http://minecraft.hfbgaming.com/?x=' + str( args[0] ) + '&y=64&z=' + str( args[1] ) + '&zoom=max'
-			elif len( args ) == 3:
-				mapurl = 'http://minecraft.hfbgaming.com/?x=' + str( args[0] ) + '&y=' + str( args[1] ) + '&z=' + str( args[2] ) + '&zoom=max'
-			elif len( args ) == 0:
-				#	No paramaters. Just give the URL
-				mapurl = 'http://minecraft.hfbgaming.com/'
-			else:
-				#	No idea what the user would be asking for. Help em.
-				mapurl = 'Usage: ' + keyword + ' X [Y] Z'
-			reply.say( mapurl )
-		elif keyword in ['?TIME']:
-			cmd_time.query_time( reply )
-		elif keyword in ['?LAST']:
-			# Note: list(args) makes a shallow copy in case caller changes args later
-			self.request_players( cmd_last.last_listener( reply, list(args) ) )
-		elif keyword in ['?SERVER', '?MINECRAFT']:
-			reply.say( '[*] The minecraft server can be found at ghoti.dyndns.org.' )
-			reply.say( '[*] For more information, say "#link 673" in channel.' )
-		elif keyword in ['!REHASH']:
-			if args:
-				for name in args:
-					with exc_manager( reply ):
-						reply.say( '[*] Rehashing module "%s"' % name )
-						cmd_rehash.do_rehash( reply, name )
-			else:
-				global irc_conn
-				reply.say( '[*] Rehashing everything.' )
-				irc_conn.disconnect( 'Asked to rehash' )
-
-
-dispatcher = cmd_dispatcher()
+dispatcher = mc_dispatcher.dispatcher()
 
 # So, let's connect to IRC!
 print( 'Attempting to connect to IRC' )
@@ -145,6 +47,9 @@ mc_conn.connect()
 if( mc_conn.status['connected'] ):
 	sock_list.append( mc_conn.socket )
 	mc_conn.cmd( 'say §7[§2!§7] VoxelHead Online.')
+
+dispatcher.mc_conn = mc_conn
+dispatcher.irc_conn = irc_conn
 
 # sock_list = [ mc_conn.socket, irc_conn.socket ]
 
