@@ -10,21 +10,17 @@ CMD_PREFIX = [ '?', '!' ]
 
 # Define our IRC Class
 class IRC:
-	server = ''
-	port = 6667
-	nick = ''
-	channel = ''
-	status = { 'connected' : False, 'registered' : False, 'joined' : False}
-	join_ok = False
-	chanlist = []
-	data = ''
-	buffer = ''
-	events = []
-	socket = socket.socket( socket.AF_INET, socket.SOCK_STREAM )
-	print_next_event = True
-	outbox = []
 
 	def __init__( self, dispatcher, server, port, nick, channel ):
+		self.status = { 'connected' : False, 'registered' : False, 'joined' : False}
+		self.join_ok = False
+		self.data = ''
+		self.buffer = ''
+		self.events = []
+		self.socket = socket.socket( socket.AF_INET, socket.SOCK_STREAM )
+		self.print_next_event = True
+		self.outbox = []
+
 		#TODO: add error-checking and sanity checks
 		self.dispatcher = dispatcher
 		self.server = server
