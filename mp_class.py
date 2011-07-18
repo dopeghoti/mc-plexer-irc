@@ -17,16 +17,15 @@ from mc_private import *
 CMD_PREFIX = [ '?', '!' ]
 
 class multiplexer_connection:
-	outbox = []
-	socket = socket.socket( socket.AF_UNIX, socket.SOCK_STREAM )
-	sockfile = ''
-	password = ''
-	status = { 'connected' : False, 'authenticated' : False }
-	buffer = ''
-	data = ''
-	events = []
 
 	def __init__( self, dispatcher, sockfile, port = None, password = None ):
+		self.outbox = []
+		self.socket = socket.socket( socket.AF_UNIX, socket.SOCK_STREAM )
+		self.status = { 'connected' : False, 'authenticated' : False }
+		self.buffer = ''
+		self.data = ''
+		self.events = []
+
 		self.dispatcher = dispatcher
 		self.sockfile = sockfile
 		self.password = password
