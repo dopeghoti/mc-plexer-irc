@@ -36,20 +36,20 @@ def query_time( reply ):
 	data = nbt.NBTFile(level_file)["Data"]
 
 	time = data["Time"].value % 24000
-	rain = data["raining"].value
-	thunder = data["thundering"].value
+	#rain = data["raining"].value
+	#thunder = data["thundering"].value
 
 	index = bisect.bisect( names, ( time, ) )
 	name = random.choice( names[index - 1][1] )
-	text = "[*] 'Tis " + name + " in Loafyland, with "
+	text = "[*] 'Tis " + name + " in Loafyland."
 
-	if rain:
-		if thunder:
-			text += "a severe thunderstorm warning."
-		else:
-			text += "a chance of showers."
-	else:
-		text += "partly cloudy skies."
+	#if rain:
+	#	if thunder:
+	#		text += "a severe thunderstorm warning."
+	#	else:
+	#		text += "a chance of showers."
+	#else:
+	#	text += "partly cloudy skies."
 
 
 	reply.say( text )

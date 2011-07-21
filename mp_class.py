@@ -178,6 +178,8 @@ class multiplexer_connection:
 						self.dispatcher.notify_players( players )
 					elif ' '.join(eparts[5:7]) == 'logged in':
 						self.dispatcher.notify_login( eparts[3] )
+					elif ' '.join(eparts[4:6]) == 'lost connection:':
+						self.dispatcher.notify_logout( eparts[3] )
 			self.events = []
 
 #	End of class definition
