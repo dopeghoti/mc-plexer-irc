@@ -42,9 +42,15 @@ class dispatcher:
 				listener.notify_players( players )
 
 	def notify_login( self, player ):
-		# Touch profile timestamp to record login time for ?who
+		# Touch profile timestamp to record login time for ?who and print login msg on IRC
 		with exc_manager():
 			cmd_last.notify_login( player )
+			self.irc_conn.say( "14[*] 15%s14 has arrived in Loafyland." % player )
+
+	def notify_logout( self, player ):
+		# Print logout msg on IRC
+		with exc_manager():
+			self.irc_conn.say( "14[*] 15%s14 has departed from Loafyland." % player )
 
 	def notify_cmd( self, reply, talker, keyword, args ):
 		with exc_manager( reply ):
