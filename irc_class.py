@@ -137,6 +137,27 @@ class IRC:
 			temp_outbox = ' '.join( sdata[3:] ).replace( ':', '', 1 )
 			temp_outbox = '§8[#] New IRC channel topic:§b ' + temp_outbox
 			self.outbox.append( temp_outbox )
+		elif sdata[1] == 'JOIN' and sdata[2].replace( ':', '', 1 ) == self.channel:
+			#	Someone joined the channel
+			#	:Nick!ident@host.example.com JOIN :##loafyland
+			#	\__________[0]_____________/ \[1]/ \___[2]___/
+			nick = sdata[0].replace( ':', '', 1 ).split( '!' )[0]
+			temp_outbox = '§8[#] §7' + nick + '§8 has joined the IRC channel.'
+			self.outbox.append( temp_outbox )
+		elif sdata[1] == 'PART' and sdata[2].replace( ':', '', 1 ) == self.channel:
+			#	Someone left the channel
+			#	:Nick!ident@host.example.com PART ##loafyland :Reason
+			#	\__________[0]_____________/ \[1]/\___[2]___/ \_[3]_/
+			nick = sdata[0].replace( ':', '', 1 ).split( '!' )[0]
+			temp_outbox = '§8[#] §7' + nick + '§8 has left the IRC channel.'
+			self.outbox.append( temp_outbox )
+		elif sdata[1] == 'KICK' and sdata[2].replace( ':', '', 1 ) == self.channel:
+			#	Nick1 has kicked Nick2 out of the channel
+			#	:Nick1!ident@host.example.com KICK ##loafyland Nick2 :Reason
+			#	\_______[0] (Kicker)________/ \[1]/\___[2]___/ \[3]/ \_[4]_/
+			nick = sdata[3].replace( ':', '', 1 ).split( '!' )[0]
+			temp_outbox = '§8[#] §7' + nick + '§8 was kicked from the IRC channel.'
+			self.outbox.append( temp_outbox )
 		return( self.data )
 
 	def say( self, text ):
