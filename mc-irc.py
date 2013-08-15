@@ -15,7 +15,7 @@ import mc_dispatcher
 # TODO: External configuration files
 
 # IRC configuration settings
-irc_server = 'asimov.freenode.net'
+irc_server = 'irc.freenode.net'
 irc_nick = 'VoxelHead'
 irc_port = 6667
 #irc_channel = '###linkulator'
