@@ -75,7 +75,7 @@ class dispatcher:
 		elif keyword in ['?WHO', '?W', '?PLAYERS']:
 			self.request_players( cmd_last.who_listener( reply ) )
 		elif keyword in ['?MUMBLE']:
-			reply.say( '[*] Mumble server at wold.its.lsu.edu' )
+			reply.say( '[*] Mumble server at ripley.thenexusproject.org:64738' )
 			reply.say( '[*] Contact DopeGhoti, Thvortex, or Sunfall (Phil_Bordelon) for password.')
 		elif keyword in ['?LOAD']:
 			u = open( '/proc/loadavg', 'r' )
