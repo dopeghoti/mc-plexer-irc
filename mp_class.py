@@ -118,7 +118,7 @@ class multiplexer_connection:
 			if not curr_word or len( line ) + len( curr_word ) > maxlen:
 				#self.cmd( cmd + ' ' + line )
 				self.cmd( cmd + line )
-				line = surline
+				line = ' ' + surline
 			if curr_word:
 				line = line + ' ' + curr_word
 
