@@ -177,7 +177,7 @@ class multiplexer_connection:
 						r = re.compile( ",$" )
 						players = [ r.sub( "", x ) for x in eparts[5:] ]
 						self.dispatcher.notify_players( players )
-					elif ' '.join(eparts[5:7]) == 'logged in':
+					elif ' '.join(eparts[4:6]) == 'logged in':
 						self.dispatcher.notify_login( eparts[3] )
 					elif ' '.join(eparts[4:6]) == 'lost connection:':
 						self.dispatcher.notify_logout( eparts[3] )
