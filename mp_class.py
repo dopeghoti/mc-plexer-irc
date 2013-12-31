@@ -87,7 +87,7 @@ class multiplexer_connection:
 			text = text[tosend:]
 			tosend -= self.socket.send( text )
 
-	def say( self, text, cmd = 'say', maxlen = 99, surline = '[^]' ):
+	def say( self, text, cmd = 'say', maxlen = 99, surline = '[^] ' ):
 		line = ''
 		writeline = False
 		#	Find "words" that are too long, and redact them.
@@ -116,7 +116,8 @@ class multiplexer_connection:
 		while wordlist:
 			curr_word = wordlist.pop( 0 )
 			if not curr_word or len( line ) + len( curr_word ) > maxlen:
-				self.cmd( cmd + ' ' + line )
+				#self.cmd( cmd + ' ' + line )
+				self.cmd( cmd + line )
 				line = surline
 			if curr_word:
 				line = line + ' ' + curr_word
