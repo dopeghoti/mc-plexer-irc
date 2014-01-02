@@ -136,7 +136,10 @@ class multiplexer_connection:
 		if self.events:
 			for e in self.events:
 				eparts = e.split()
-				if len(eparts) > 3:
+				if len(eparts) > 2 and self.dispatcher.notify_raw( eparts ):
+					# If dispatcher was waiting to parse raw output then don't handle it further here
+					pass
+				elif len(eparts) > 3:
 					if eparts[3][0] == '<' or eparts[3] == '[CONSOLE]':
 						# Looks like someone's talking.
 						talker  = eparts[3][1:-1]	# strip the leading and trailing brackets
@@ -173,10 +176,8 @@ class multiplexer_connection:
 						keyword = '?' + eparts[6].upper()
 						args = eparts[7:]
 						self.dispatcher.notify_cmd( private_reply( self, talker ), talker, keyword, args )
-					elif ' '.join(eparts[3:5]) == 'Connected players:':
-						r = re.compile( ",$" )
-						players = [ r.sub( "", x ) for x in eparts[5:] ]
-						self.dispatcher.notify_players( players )
+					elif ' '.join(eparts[6:8]) == 'players online:':
+						self.dispatcher.notify_players()
 					elif ' '.join(eparts[4:6]) == 'logged in':
 						self.dispatcher.notify_login( eparts[3].split('[')[0] )
 					elif ' '.join(eparts[4:6]) == 'lost connection:':

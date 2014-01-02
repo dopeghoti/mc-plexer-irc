@@ -27,19 +27,31 @@ class exc_manager:
 class dispatcher:
 	def __init__( self ):
 		self.online_player_listeners = []
+		self.raw_listeners = []
 
 	def request_players( self, listener ):
 		# Called by bot commands to register a listener for output of server "list" command
+		# Since the "list" command is now split into two parts, register a raw handler ir
 		self.online_player_listeners.append( listener )
 		self.mc_conn.cmd('list')
 
-	def notify_players( self, players ):
-		# Someone asked who's playing. Relay it to one of the listening objects
+	def notify_raw( self, eparts ):
+		# Someone asked who's playing. Handle parsing of the raw 2nd line of "list" command output
+		if len(self.raw_listeners):
+			listener = self.raw_listeners[0]
+			del self.raw_listeners[0]
+			with exc_manager( listener.reply ):
+				listener.notify_raw( eparts )
+			return True   # Inhibit further handling of raw text line in caller
+		else:
+			return False  # No raw listeners pending so let caller handle the raw line
+
+	def notify_players( self ):
+		# Someone asked who's playing. Prepare raw listener to parse the actual list on the next line
 		if len(self.online_player_listeners):
 			listener = self.online_player_listeners[0]
+			self.raw_listeners.append( listener )
 			del self.online_player_listeners[0]
-			with exc_manager( listener.reply ):
-				listener.notify_players( players )
 
 	def notify_login( self, player ):
 		# Touch profile timestamp to record login time for ?who and print login msg on IRC
