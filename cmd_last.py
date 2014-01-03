@@ -12,23 +12,30 @@ profile_dir = '/home/minecraft/loafy/players'
 default_num_last = 5
 
 
-class who_listener(object):
+class player_list_listener(object):
 	def __init__( self, reply ):
 		self.reply = reply
 
-	def notify_players( self, players ):
-		file_names = [ x + ".dat" for x in players ]
-		text = format_players( file_names, 0, predate = "since ", pretime = "for " )
+	def notify_raw( self, eparts ):
+		r = re.compile( ",$" )
+		players = [ r.sub( "", x ) for x in eparts[3:] ]
+		self.notify_players( players )
 
-		if len(text):
-			self.reply.say( '[*] Currently playing: ' + ', '.join( text ) )
+
+class who_listener(player_list_listener):
+	def __init__( self, reply ):
+		super(who_listener, self).__init__( reply )
+
+	def notify_players( self, players ):
+		if len(players):
+			self.reply.say( '[*] Currently playing: ' + ', '.join( players ) )
 		else:
 			self.reply.say( '[*] No players currently online' )
 
 
-class last_listener(object):
+class last_listener(player_list_listener):
 	def __init__( self, reply, args ):
-		self.reply = reply
+		super(last_listener, self).__init__( reply )
 		self.args = args
 
 	def notify_players( self, players ):
