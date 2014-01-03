@@ -31,26 +31,29 @@ names.sort()
 # Initialization
 random.seed()
 
-def query_time( reply ):
-	global names
-	data = nbt.NBTFile(level_file)["Data"]
+class time_listener(object):
+	def __init__( self, reply ):
+		self.reply = reply
 
-	time = data["Time"].value % 24000
-	#rain = data["raining"].value
-	#thunder = data["thundering"].value
+	def notify_save( self ):
+		global names
+		data = nbt.NBTFile(level_file)["Data"]
 
-	index = bisect.bisect( names, ( time, ) )
-	name = random.choice( names[index - 1][1] )
-	text = "[*] 'Tis " + name + " in Loafyland."
+		time = data["DayTime"].value % 24000
+		rain = data["raining"].value
+		thunder = data["thundering"].value
 
-	#if rain:
-	#	if thunder:
-	#		text += "a severe thunderstorm warning."
-	#	else:
-	#		text += "a chance of showers."
-	#else:
-	#	text += "partly cloudy skies."
+		index = bisect.bisect( names, ( time, ) )
+		name = random.choice( names[index - 1][1] )
+		text = "[*] 'Tis " + name + " in Loafyland with "
 
+		if rain:
+			if thunder:
+				text += "a severe thunderstorm warning."
+			else:
+				text += "a chance of showers."
+		else:
+			text += "partly cloudy skies."
 
-	reply.say( text )
+		self.reply.say( text )
 

@@ -176,6 +176,8 @@ class multiplexer_connection:
 						keyword = '?' + eparts[6].upper()
 						args = eparts[7:]
 						self.dispatcher.notify_cmd( private_reply( self, talker ), talker, keyword, args )
+					elif ' '.join(eparts[3:]) == 'Saved the world':
+						self.dispatcher.notify_save()
 					elif ' '.join(eparts[6:8]) == 'players online:':
 						self.dispatcher.notify_players()
 					elif ' '.join(eparts[4:6]) == 'logged in':

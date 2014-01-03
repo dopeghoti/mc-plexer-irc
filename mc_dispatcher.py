@@ -27,6 +27,7 @@ class exc_manager:
 class dispatcher:
 	def __init__( self ):
 		self.online_player_listeners = []
+		self.save_listeners = []
 		self.raw_listeners = []
 
 	def request_players( self, listener ):
@@ -34,6 +35,11 @@ class dispatcher:
 		# Since the "list" command is now split into two parts, register a raw handler ir
 		self.online_player_listeners.append( listener )
 		self.mc_conn.cmd('list')
+
+	def request_save( self, listener ):
+		# Called by bot commands to register a listener for completion of "Save-all" command
+		self.save_listeners.append( listener )
+		self.mc_conn.cmd('save-all')
 
 	def notify_raw( self, eparts ):
 		# Someone asked who's playing. Handle parsing of the raw 2nd line of "list" command output
@@ -45,6 +51,14 @@ class dispatcher:
 			return True   # Inhibit further handling of raw text line in caller
 		else:
 			return False  # No raw listeners pending so let caller handle the raw line
+
+	def notify_save( self ):
+		# Someone was waiting for "save-all" to complete; notify them
+		if len(self.save_listeners):
+			listener = self.save_listeners[0]
+			del self.save_listeners[0]
+			with exc_manager( listener.reply ):
+				listener.notify_save()
 
 	def notify_players( self ):
 		# Someone asked who's playing. Prepare raw listener to parse the actual list on the next line
@@ -108,7 +122,8 @@ class dispatcher:
 				mapurl = 'Usage: ' + keyword + ' X [Y] Z'
 			reply.say( mapurl )
 		elif keyword in ['?TIME']:
-			cmd_time.query_time( reply )
+			# Need to "save-all" so level.dat is updated with latest time
+			self.request_save( cmd_time.time_listener( reply ) )
 		elif keyword in ['?LAST']:
 			# Note: list(args) makes a shallow copy in case caller changes args later
 			self.request_players( cmd_last.last_listener( reply, list(args) ) )
